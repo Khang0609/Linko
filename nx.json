@@ -20,17 +20,10 @@
       "outputs": ["{projectRoot}/dist", "{projectRoot}/.next", "{projectRoot}/build"],
       "cache": true
     },
-    "test": {
-      "inputs": ["default", "^production"],
-      "cache": true
-    },
-    "lint": {
-      "inputs": ["default"],
-      "cache": true
-    },
-    "dev": {
-      "cache": false
-    }
+    "test": { "inputs": ["default", "^production"], "cache": true },
+    "lint": { "inputs": ["default"], "cache": true },
+    "dev": { "cache": false }
   },
-  "analytics": true
+  "analytics": true,
+  "nxCloudId": "6a37c63bcf41342fe562b786"
 }
