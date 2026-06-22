@@ -1,0 +1,10 @@
+{
+  "name": "@linko/core-utils",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Building core-utils...'",
+    "lint": "eslint . --no-error-on-unmatched-pattern",
+    "test": "echo 'No tests specified'"
+  }
+}

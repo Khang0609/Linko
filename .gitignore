@@ -1,3 +1,15 @@
 node_modules
 dist
 build
+.next
+.nx
+.eslintcache
+coverage
+.env*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.idea
+.vscode
