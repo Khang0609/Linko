@@ -13,3 +13,11 @@ yarn-error.log*
 pnpm-debug.log*
 .idea
 .vscode
+
+# Python (apps/api)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+apps/api/.env

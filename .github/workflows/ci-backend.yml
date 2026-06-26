@@ -1,0 +1,37 @@
+name: CI Backend (Python)
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['apps/api/**', '.github/workflows/ci-backend.yml']
+  pull_request:
+    paths: ['apps/api/**', '.github/workflows/ci-backend.yml']
+
+defaults:
+  run:
+    working-directory: apps/api
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: '0.10.8'
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Pytest
+        run: uv run pytest -q

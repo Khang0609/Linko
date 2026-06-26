@@ -1,0 +1,24 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16   # Postgres 16 + pgvector ready
+    environment:
+      POSTGRES_USER: linko
+      POSTGRES_PASSWORD: linko
+      POSTGRES_DB: linko
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linko"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+  api:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql+asyncpg://linko:linko@db:5432/linko
+      ALEMBIC_DATABASE_URL: postgresql+psycopg://linko:linko@db:5432/linko
+    ports: ["8080:8080"]
+volumes:
+  pgdata:
