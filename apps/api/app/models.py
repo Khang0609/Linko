@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     ForeignKey,
+    Index,
     Integer,
     SmallInteger,
     Text,
@@ -139,6 +140,15 @@ class BusinessPerson(Base):
     ended_at: Mapped[date | None] = mapped_column()
     __table_args__ = (
         UniqueConstraint("business_id", "person_id", "role", name="uq_business_person_role"),
+        # Partial unique: at most 1 NULL role per business-person pair
+        # Postgres treats NULL ≠ NULL in unique constraints — this index prevents duplicates.
+        Index(
+            "uq_business_person_null_role",
+            "business_id",
+            "person_id",
+            unique=True,
+            postgresql_where=text("role IS NULL"),
+        ),
         CheckConstraint("role IN ('owner','director','sales_rep','authorized_rep')",
                         name="ck_bp_role"),
         CheckConstraint("ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at",

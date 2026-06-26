@@ -25,11 +25,19 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS vector")      # pgvector
     op.execute("CREATE EXTENSION IF NOT EXISTS unaccent")    # full-text tiếng Việt (bỏ dấu)
     # F5: google_ml_integration only on Cloud SQL (flag cloudsql.enable_google_ml_integration).
-    # Wrapped in DO block — local dev skips silently.
+    # Catches expected local-dev cases; surfaces unexpected errors with SQLERRM.
     op.execute(
         "DO $$ BEGIN "
         "  CREATE EXTENSION IF NOT EXISTS google_ml_integration; "
-        "EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'skip google_ml_integration (local dev)'; "
+        "EXCEPTION "
+        "  WHEN undefined_object THEN "
+        "    RAISE NOTICE 'skip google_ml_integration (extension not registered)'; "
+        "  WHEN feature_not_supported THEN "
+        "    RAISE NOTICE 'skip google_ml_integration (extension not installed at OS level — expected on local dev)'; "
+        "  WHEN insufficient_privilege THEN "
+        "    RAISE NOTICE 'skip google_ml_integration (missing IAM / Cloud SQL flag — check cloudsql.enable_google_ml_integration)'; "
+        "  WHEN OTHERS THEN "
+        "    RAISE NOTICE 'skip google_ml_integration (unexpected error: %)', SQLERRM; "
         "END $$;"
     )
 
@@ -203,6 +211,11 @@ def upgrade() -> None:
     op.create_index("idx_needs_attrs", "needs", ["structured_attrs"], postgresql_using="gin")
     op.create_index("idx_offers_geo", "offers", ["geo_scope"], postgresql_using="gin")
     op.create_index("idx_needs_geo", "needs", ["geo_scope"], postgresql_using="gin")
+    # Partial unique: at most 1 NULL role per business-person pair (Postgres: NULL ≠ NULL)
+    op.execute(
+        "CREATE UNIQUE INDEX uq_business_person_null_role "
+        "ON business_persons (business_id, person_id) WHERE role IS NULL;"
+    )
 
     # ===== Trigger updated_at (DB-level, runs even when bypassing ORM) =====
     op.execute("""
@@ -217,6 +230,7 @@ def upgrade() -> None:
             BEFORE UPDATE ON {tbl}
             FOR EACH ROW EXECUTE FUNCTION set_updated_at();
         """)
+
 
 def downgrade() -> None:
     # Drop triggers + function
