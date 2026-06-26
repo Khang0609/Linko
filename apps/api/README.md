@@ -8,15 +8,60 @@ Backend Python cho Linko — business matching platform. Implement issue #4 (Sch
 - **Alembic** (sync, psycopg) — migrations
 - **PostgreSQL 16** + **pgvector** (local: `pgvector/pgvector:pg16`)
 
-## Quick start (local)
+## Connecting to Cloud SQL
+
+This project supports **2 connection patterns** — pick based on where you're running.
+
+### A. Cloud SQL Unix socket (Cloud Run / GKE / Compute Engine)
+
+Cloud SQL instances are **not accessible by IP by default** — they use Unix domain sockets for security. No IP needed.
+
+```env
+# .env — values for Cloud Run deployment
+DATABASE_URL=postgresql+asyncpg://USER:PASS@/DB_NAME?host=/cloudsql/PROJECT:REGION:INSTANCE
+ALEMBIC_DATABASE_URL=postgresql+psycopg://USER:PASS@/DB_NAME?host=/cloudsql/PROJECT:REGION:INSTANCE
+```
+
+Example with our dev instance:
+```env
+DATABASE_URL=postgresql+asyncpg://postgres:linkohcmut@/postgres?host=/cloudsql/project-8cf76e15-7314-466b-b9f1:us-central1:linko-db-dev
+ALEMBIC_DATABASE_URL=postgresql+psycopg://postgres:linkohcmut@/postgres?host=/cloudsql/project-8cf76e15-7314-466b-b9f1:us-central1:linko-db-dev
+```
+
+The socket path `/cloudsql/<PROJECT>:<REGION>:<INSTANCE>` is auto-mounted by GCP.  
+**No IP to share — the socket is local to the GCP environment.**
+
+### B. Local dev via Cloud SQL Auth Proxy
+
+To connect to Cloud SQL from your laptop, use [`cloud-sql-proxy`](https://cloud.google.com/sql/docs/postgres/connect-auth-proxy):
 
 ```bash
-cd apps/api
+# 1. Download & authenticate
+cloud-sql-proxy project-8cf76e15-7314-466b-b9f1:us-central1:linko-db-dev
+
+# 2. Proxy creates a TCP tunnel on localhost:5432 → Cloud SQL
+# Now connect via localhost:
+```
+
+```env
+# .env — local via proxy
+DATABASE_URL=postgresql+asyncpg://postgres:linkohcmut@localhost:5432/postgres
+ALEMBIC_DATABASE_URL=postgresql+psycopg://postgres:linkohcmut@localhost:5432/postgres
+```
+
+### C. Docker Compose (pgvector local — no Cloud SQL)
+
+If you don't need Cloud SQL and just want to develop locally:
+
+```bash
 docker compose up --build -d
+# DB: pgvector/pgvector:pg16 → localhost:5432
 # API: http://localhost:8080/health → {"status":"ok"}
 ```
 
-Migration tự chạy trong CMD (`alembic upgrade head`).
+Migration runs automatically on container start.
+
+
 
 ## Dev commands
 
