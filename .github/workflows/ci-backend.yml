@@ -14,6 +14,19 @@ defaults:
 jobs:
   lint-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: linko
+          POSTGRES_PASSWORD: linko
+          POSTGRES_DB: linko_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U linko -d linko_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -33,5 +46,14 @@ jobs:
       - name: Ruff lint
         run: uv run ruff check .
 
+      - name: Run migrations
+        env:
+          ALEMBIC_DATABASE_URL: postgresql+psycopg://linko:linko@localhost:5432/linko_test
+        run: uv run alembic upgrade head
+
       - name: Pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://linko:linko@localhost:5432/linko_test
+          ALEMBIC_DATABASE_URL: postgresql+psycopg://linko:linko@localhost:5432/linko_test
+          TEST_DATABASE_URL: postgresql+asyncpg://linko:linko@localhost:5432/linko_test
         run: uv run pytest -q
