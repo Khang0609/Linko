@@ -144,7 +144,7 @@ Status codes:
 - `201`: profile accepted and persisted
 - `400`: malformed JSON
 - `422`: missing/invalid profile data, unknown references, or `Idempotency-Key` reused with a different payload
-- `409`: duplicate `tax_id` or an idempotency key still processing
+- `409`: duplicate `tax_id`; idempotency in-progress conflicts are reserved for future/non-transactional flows
 - `500`: internal server error
 
 ### Idempotency
@@ -153,7 +153,8 @@ Clients may send `Idempotency-Key` on `POST /businesses`.
 
 - Same key + same payload returns the cached response with `Idempotent-Replayed: true`.
 - Same key + different payload returns `422`.
-- Same key while the original request is still processing returns `409` with `Retry-After`.
+- In v0.1, same-key concurrent requests serialize on the database row and normally replay after the original commits.
+- The `409` + `Retry-After` in-progress branch exists defensively, but is not expected in the current same-transaction flow.
 - Cached responses expire after `IDEMPOTENCY_TTL_SECONDS`.
 - Missing key is allowed in v0.1; the API falls back to duplicate protection through `tax_id` when present.
 

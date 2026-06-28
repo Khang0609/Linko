@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -148,11 +148,9 @@ def _business_response(payload: BusinessCreate, business: Business, warnings: li
 @router.post("", response_model=BusinessResponse, status_code=201)
 async def create_business(
     payload: BusinessCreate,
-    request: Request,
     session: Annotated[AsyncSession, Depends(get_db)],
     idem_key: Annotated[str | None, Depends(get_idempotency_key)],
 ) -> BusinessResponse:
-    del request
     payload_hash = hash_payload(payload.model_dump(mode="json"))
     idempotency = IdempotencyManager(settings.idempotency_ttl_seconds)
     warnings = []

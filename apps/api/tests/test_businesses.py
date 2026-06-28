@@ -127,6 +127,23 @@ def test_create_business_duplicate_tax_id(
     assert response.json()["errors"][0]["code"] == "DUPLICATE_TAX_ID"
 
 
+def test_missing_idempotency_key_falls_back_to_tax_id_duplicate_protection(
+    clean_db: None, test_client: TestClient, sample_business_payload: dict[str, Any]
+) -> None:
+    first_payload = deepcopy(sample_business_payload)
+    first_payload["tax_id"] = "0312345679"
+    second_payload = deepcopy(sample_business_payload)
+    second_payload["tax_id"] = "0312345679"
+    second_payload["name"] = "Công ty TNHH Không Có Idempotency Key"
+
+    first = _post(test_client, first_payload)
+    second = _post(test_client, second_payload)
+
+    assert first.status_code == 201
+    assert second.status_code == 409
+    assert second.json()["errors"][0]["code"] == "DUPLICATE_TAX_ID"
+
+
 def test_idempotency_replay(
     clean_db: None, test_client: TestClient, sample_business_payload: dict[str, Any]
 ) -> None:

@@ -43,12 +43,6 @@ class DuplicateBusinessError(AppProblemError):
     type = "https://linko.vn/problems/duplicate-business"
 
 
-class InvalidProvinceError(AppProblemError):
-    status_code = 422
-    title = "Invalid province"
-    type = "https://linko.vn/problems/invalid-province"
-
-
 class IdempotencyConflictError(AppProblemError):
     status_code = 409
     title = "Idempotency key is already processing"
