@@ -469,7 +469,8 @@ Nguồn: ScienceDirect — local SME suppliers · IDC — Proximity Sourcing · 
 - **v1.0** — Bản nghiên cứu gốc: Q1–Q4, pháp lý VN (VN-1/VN-2), trụ kỹ thuật, tự audit, nguồn & confidence.
 - **v1.1** — Thêm Mục 8 (ánh xạ tỉnh 63→34 đầy đủ + code-ready), Mục 9 (CHỐT seed = Phương án B), Mục 10 (CHỐT province = Phương án A).
 - **v1.2** — Vòng research chuyên sâu bổ sung: chuẩn hoá mã trạng thái Idempotency-Key (409/422/400 theo IETF draft-05), khuyến nghị error envelope RFC 9457, lưu ý FastAPI mặc định 422 cho JSON hỏng, cảnh báo chuẩn hoá L2 cho embedding 768 chiều; đồng bộ bảng quyết định (Mục 4) & nguồn (Mục 6).
-- **v1.3 (bản này)** — Thêm Mục 11.3: danh sách giả định để *tiến hành trước, team review sau* (assumption-driven), kèm mức rủi ro và ảnh hưởng nếu phải lật giả định.
+- **v1.3** — Thêm Mục 11.3: danh sách giả định để *tiến hành trước, team review sau* (assumption-driven), kèm mức rủi ro và ảnh hưởng nếu phải lật giả định.
+- **v1.4 (bản này)** — Thêm Mục 12 "Kết luận sau thảo luận team": chốt `/api/v1`, error envelope RFC 9457, tỉnh dùng dropdown (bỏ sentinel), Idempotency-Key FE không gửi (khóa nút Submit), L2 để dành M2, mật khẩu DB đã đổi; kèm rủi ro tồn dư & bổ sung nợ kỹ thuật M2.
 
 ### 11.2 Việc cần team xác nhận từ bên ngoài (ngoài phạm vi quyết của tài liệu)
 
@@ -499,5 +500,40 @@ Nguồn: ScienceDirect — local SME suppliers · IDC — Proximity Sourcing · 
 📌
 
 **Điểm duy nhất nên hỏi FE trước khi code sâu:** giả định **3b (error envelope)** — vì nó ràng buộc cách FE parse lỗi. Ba giả định còn lại cứ tiến hành, review sau trên PR.
+
+</aside>
+
+---
+
+## 12. Kết luận sau thảo luận team (chốt triển khai — 29/06/2026)
+
+<aside>
+✅
+
+**Bối cảnh:** Sau khi PR #15 hoàn thành & được review, team đã thảo luận ngay trên PR và **chốt** các điểm dưới đây. Mục này **đóng lại** các câu hỏi ngoại bộ còn treo ở Mục 11.2.
+
+</aside>
+
+| Điểm | Đã chốt | Ghi chú |
+| --- | --- | --- |
+| Đánh số phiên bản endpoint | `POST /api/v1/businesses` | Theo đề xuất FE (#6); commit `7a63865`, CI đã xanh; `/health` giữ ở gốc |
+| Mật khẩu cơ sở dữ liệu | Đã đổi | Lưu ở nơi bí mật (Secret Manager / biến môi trường), không commit vào git |
+| Error envelope (giả định 3b) | RFC 9457 `application/problem+json` | FE đã nắm cấu trúc lỗi mới, sẽ catch & render tương ứng |
+| Tỉnh "không xác định" | **Không cần** sentinel `khong_xac_dinh` | FE chuyển sang **dropdown chọn sẵn** 34 tỉnh → loại bỏ nhập sai; thiếu thông tin thì hệ thống hỏi gợi ý. → Cập nhật điều kiện ở Mục 10.4. |
+| Idempotency-Key (giả định 3a) | FE **không gửi** key | FE khóa nút Submit khi đang xử lý; BE giữ fallback `tax_id`  • cơ chế idempotency làm lưới an toàn |
+| Ngành con (L2) cho 10 ngành còn lại (giả định 2) | **Để dành M2** (nợ kỹ thuật) | L2 optional, không chặn onboarding; bổ sung danh mục ở M2 |
+| Seed reference data (giả định 1) | Tự nạp khi merge (migration `0002`) | Xác nhận `count` industries=30/intent_types=8/certifications=12 trên `develop` sau khi merge |
+
+<aside>
+⚠️
+
+**Rủi ro tồn dư cần theo dõi (sau merge):** FE chống bấm-trùng bằng cách khóa nút Submit — chỉ bảo vệ ở **phía client**, không chặn được F5/refresh, retry khi mất mạng, hay gọi API từ ngoài. Với hồ sơ **không có `tax_id`**, server mất lớp chống trùng. → Giữ nguyên cơ chế idempotency ở server làm lưới an toàn; nếu thực tế phát sinh hồ sơ trùng thì yêu cầu FE gửi kèm `Idempotency-Key`.
+
+</aside>
+
+<aside>
+📝
+
+**Bổ sung nợ kỹ thuật M2:** (d) bổ sung danh mục ngành con (L2) cho 10 ngành chưa có, rồi siết validate nếu cần.
 
 </aside>
