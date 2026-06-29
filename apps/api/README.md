@@ -3,7 +3,7 @@
 Backend Python cho Linko, gồm:
 
 - Issue #4: schema DB, migrations, Docker local PostgreSQL/pgvector.
-- Issue #7: endpoint onboarding `POST /businesses`, validation, idempotency, province normalization, RFC 9457 errors.
+- Issue #7: endpoint onboarding `POST /api/v1/businesses`, validation, idempotency, province normalization, RFC 9457 errors.
 
 ## Stack
 
@@ -97,7 +97,7 @@ uv run pytest -q
 
 ## API Endpoints
 
-### `POST /businesses`
+### `POST /api/v1/businesses`
 
 Main onboarding confirmation endpoint for issue #7. It accepts a reviewed business profile from the frontend and only
 persists it when the core dataset is complete.
@@ -134,7 +134,7 @@ Errors use RFC 9457-style `application/problem+json`:
   "title": "Request validation failed",
   "status": 422,
   "detail": "Request body failed validation.",
-  "instance": "/businesses",
+  "instance": "/api/v1/businesses",
   "errors": []
 }
 ```
@@ -149,7 +149,7 @@ Status codes:
 
 ### Idempotency
 
-Clients may send `Idempotency-Key` on `POST /businesses`.
+Clients may send `Idempotency-Key` on `POST /api/v1/businesses`.
 
 - Same key + same payload returns the cached response with `Idempotent-Replayed: true`.
 - Same key + different payload returns `422`.
@@ -181,7 +181,7 @@ Expected reference-data counts after `alembic upgrade head`:
 
 - `app/models.py`: SQLAlchemy model source of truth for Alembic.
 - `app/schemas.py`: Pydantic v2 request/response DTOs for onboarding.
-- `app/routers/businesses.py`: `POST /businesses` endpoint.
+- `app/routers/businesses.py`: `POST /api/v1/businesses` endpoint.
 - `app/exceptions.py`: RFC 9457 problem+json handlers.
 - `core/province_mapping.py`: 63-to-34 province normalization.
 - `core/idempotency.py`: `Idempotency-Key` hashing and response caching.

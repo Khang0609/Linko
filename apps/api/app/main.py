@@ -5,7 +5,7 @@ from app.routers import businesses
 
 app = FastAPI(title="Linko API", version="0.1.0")
 register_exception_handlers(app)
-app.include_router(businesses.router, prefix="/businesses", tags=["businesses"])
+app.include_router(businesses.router, prefix="/api/v1/businesses", tags=["businesses"])
 
 
 @app.get("/health")

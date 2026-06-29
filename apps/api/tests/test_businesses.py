@@ -6,9 +6,11 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
+BUSINESSES_URL = "/api/v1/businesses"
+
 
 def _post(client: TestClient, payload: dict[str, Any], headers: dict[str, str] | None = None):
-    return client.post("/businesses", json=payload, headers=headers or {})
+    return client.post(BUSINESSES_URL, json=payload, headers=headers or {})
 
 
 def test_create_business_201(
@@ -173,7 +175,7 @@ def test_idempotency_key_reuse_different_payload(
 
 
 def test_create_business_malformed_json(clean_db: None, test_client: TestClient) -> None:
-    response = test_client.post("/businesses", content="not json", headers={"Content-Type": "application/json"})
+    response = test_client.post(BUSINESSES_URL, content="not json", headers={"Content-Type": "application/json"})
 
     assert response.status_code == 400
     assert response.headers["content-type"].startswith("application/problem+json")
