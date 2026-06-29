@@ -16,8 +16,12 @@ pnpm-debug.log*
 
 # Python (apps/api)
 .venv/
+.venv*/
+apps/api/.venv*/
+*.egg-info/
 __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
 apps/api/.env
+.env

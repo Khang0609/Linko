@@ -22,10 +22,18 @@ dev = [
     "httpx>=0.27",
 ]
 
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*", "core*"]
+exclude = ["alembic*", "scripts*", "tests*"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py311"
-exclude = ["alembic/versions/"]
+exclude = ["alembic/versions/", ".venv/", ".venv-check/"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
