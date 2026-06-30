@@ -128,17 +128,17 @@ export default function LandingPage() {
             onClick={() => navigate('/login')}
             className="text-sm font-medium text-gray-400 hover:text-white transition-colors px-3 py-1.5"
           >
-            Log In
+            Sign In
           </button>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/signup')}
             className="text-sm font-semibold text-white px-4 py-2 rounded-xl transition-all duration-200 hover:scale-105"
             style={{
               background: 'linear-gradient(135deg,#2563eb,#3b82f6)',
               boxShadow: '0 0 20px rgba(37,99,235,0.4)',
             }}
           >
-            Get Started
+            Sign Up
           </button>
         </div>
 
@@ -188,11 +188,11 @@ export default function LandingPage() {
               Sign In
             </button>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/signup')}
               className="text-center text-white font-semibold py-2.5 rounded-xl"
               style={{ background: 'linear-gradient(135deg,#2563eb,#3b82f6)' }}
             >
-              Get Started
+              Sign Up
             </button>
           </div>
         </div>
@@ -310,29 +310,29 @@ export default function LandingPage() {
 
               <div className="flex flex-wrap gap-4 items-center">
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/signup')}
                   className="group flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white transition-all duration-200 hover:scale-105"
                   style={{
                     background: 'linear-gradient(135deg,#2563eb,#3b82f6)',
                     boxShadow: '0 0 30px rgba(37,99,235,0.45), 0 4px 16px rgba(0,0,0,0.3)',
                   }}
                 >
-                  Log in
+                  Sign Up
                   <ArrowRight
                     size={16}
                     className="transition-transform group-hover:translate-x-1"
                   />
                 </button>
-                <a
-                  href="#"
+                <button
+                  onClick={() => navigate('/login')}
                   className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-gray-300 hover:text-white transition-all duration-200"
                   style={{
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.1)',
                   }}
                 >
-                  Get started for free
-                </a>
+                  Sign In
+                </button>
               </div>
 
               {/* Social proof */}
@@ -1268,7 +1268,7 @@ function CTASection() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/signup')}
                 className="group flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-white transition-all duration-200 hover:scale-105"
                 style={{
                   background: 'linear-gradient(135deg,#2563eb,#3b82f6)',
@@ -1276,7 +1276,7 @@ function CTASection() {
                   fontSize: 15,
                 }}
               >
-                Get Started Free
+                Sign Up
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </button>
               <a

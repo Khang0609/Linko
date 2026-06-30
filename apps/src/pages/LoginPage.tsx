@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Network,
   Mail,
@@ -145,7 +146,7 @@ export default function LoginPage() {
             className="font-black text-white tracking-tight"
             style={{ fontSize: 'clamp(22px,2.6vw,34px)', letterSpacing: '-0.03em' }}
           >
-            Manage.&nbsp;Connect.&nbsp;Grow Together.&nbsp;
+            Manage&nbsp;-&nbsp;Connect&nbsp;-&nbsp;Grow Together&nbsp;-&nbsp;
             <span
               style={{
                 background: 'linear-gradient(90deg,#3b82f6,#93c5fd)',
@@ -157,7 +158,9 @@ export default function LoginPage() {
               Linko
             </span>
           </h1>
-          <p className="text-gray-500 mt-1.5 text-[13px] font-medium"></p>
+          <p className="text-gray-500 mt-1.5 text-[13px] font-medium">
+            AI-powered enterprise management platform.
+          </p>
         </div>
 
         {/* ── three-column card ── */}
@@ -225,6 +228,7 @@ export default function LoginPage() {
    TOP NAV
 ════════════════════════════════════════ */
 function TopNav() {
+  const navigate = useNavigate();
   return (
     <header
       className="relative z-20 flex-shrink-0 flex items-center justify-between px-8"
@@ -246,7 +250,7 @@ function TopNav() {
 
       {/* center */}
       <nav className="hidden md:flex items-center gap-0.5">
-        {[''].map((item) => (
+        {['Platform', 'Pricing', 'Resources'].map((item) => (
           <a
             key={item}
             href="#"
@@ -259,22 +263,22 @@ function TopNav() {
 
       {/* right */}
       <div className="flex items-center gap-2.5">
-        <a
-          href="#"
+        <button
+          onClick={() => navigate('/login')}
           className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-2.5 py-1.5"
         >
-          Log In
-        </a>
-        <a
-          href="#"
+          Sign In
+        </button>
+        <button
+          onClick={() => navigate('/signup')}
           className="text-[13px] font-semibold text-white px-4 py-2 rounded-xl transition-all hover:scale-105"
           style={{
             background: 'linear-gradient(135deg,#2563eb,#3b82f6)',
             boxShadow: '0 0 18px rgba(37,99,235,.38)',
           }}
         >
-          Get Started
-        </a>
+          Sign Up
+        </button>
       </div>
     </header>
   );
@@ -556,6 +560,7 @@ interface CP {
 }
 
 function CenterCol(p: CP) {
+  const navigate = useNavigate();
   const {
     email,
     setEmail,
@@ -611,7 +616,7 @@ function CenterCol(p: CP) {
       <h2 className="text-[22px] font-black text-white mb-0.5" style={{ letterSpacing: '-.025em' }}>
         Welcome Back
       </h2>
-      <p className="text-[13px] text-gray-400 mb-5">Log in to your Linko workspace.</p>
+      <p className="text-[13px] text-gray-400 mb-5">Sign in to your Linko workspace.</p>
 
       <form onSubmit={submit} className="flex flex-col gap-3">
         {/* email */}
@@ -705,7 +710,7 @@ function CenterCol(p: CP) {
             <Spinner />
           ) : (
             <>
-              <span>Log In</span>
+              <span>Sign In</span>
               <ArrowRight size={15} />
             </>
           )}
@@ -714,6 +719,7 @@ function CenterCol(p: CP) {
         {/* secondary */}
         <button
           type="button"
+          onClick={() => navigate('/signup')}
           className="flex items-center justify-center w-full text-[13px] font-semibold text-gray-300 hover:text-white transition-all"
           style={{
             height: 42,
