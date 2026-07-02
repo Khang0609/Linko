@@ -46,7 +46,15 @@
           "employee_range": {
             "anyOf": [
               {
-                "enum": ["0", "1_5", "6_10", "11_50", "51_100", "101_200", "200_plus"],
+                "enum": [
+                  "0",
+                  "1_5",
+                  "6_10",
+                  "11_50",
+                  "51_100",
+                  "101_200",
+                  "200_plus"
+                ],
                 "type": "string"
               },
               {
@@ -177,7 +185,11 @@
             "title": "Year Established"
           }
         },
-        "required": ["name", "industry_l1", "province"],
+        "required": [
+          "name",
+          "industry_l1",
+          "province"
+        ],
         "title": "BusinessCreate",
         "type": "object"
       },
@@ -219,7 +231,11 @@
           },
           "data_source": {
             "default": "self_reported",
-            "enum": ["self_reported", "mst_lookup", "admin_input"],
+            "enum": [
+              "self_reported",
+              "mst_lookup",
+              "admin_input"
+            ],
             "title": "Data Source",
             "type": "string"
           },
@@ -237,7 +253,15 @@
           "employee_range": {
             "anyOf": [
               {
-                "enum": ["0", "1_5", "6_10", "11_50", "51_100", "101_200", "200_plus"],
+                "enum": [
+                  "0",
+                  "1_5",
+                  "6_10",
+                  "11_50",
+                  "51_100",
+                  "101_200",
+                  "200_plus"
+                ],
                 "type": "string"
               },
               {
@@ -361,7 +385,11 @@
           },
           "verification_status": {
             "default": "unverified",
-            "enum": ["unverified", "mst_matched", "manually_verified"],
+            "enum": [
+              "unverified",
+              "mst_matched",
+              "manually_verified"
+            ],
             "title": "Verification Status",
             "type": "string"
           },
@@ -386,7 +414,13 @@
             "title": "Year Established"
           }
         },
-        "required": ["name", "industry_l1", "province", "id", "created_at"],
+        "required": [
+          "name",
+          "industry_l1",
+          "province",
+          "id",
+          "created_at"
+        ],
         "title": "BusinessResponse",
         "type": "object"
       },
@@ -470,7 +504,10 @@
             "type": "string"
           }
         },
-        "required": ["intent_type", "title"],
+        "required": [
+          "intent_type",
+          "title"
+        ],
         "title": "NeedCreate",
         "type": "object"
       },
@@ -541,7 +578,10 @@
             "type": "string"
           }
         },
-        "required": ["intent_type", "title"],
+        "required": [
+          "intent_type",
+          "title"
+        ],
         "title": "OfferCreate",
         "type": "object"
       },
@@ -577,7 +617,12 @@
           "role": {
             "anyOf": [
               {
-                "enum": ["owner", "director", "sales_rep", "authorized_rep"],
+                "enum": [
+                  "owner",
+                  "director",
+                  "sales_rep",
+                  "authorized_rep"
+                ],
                 "type": "string"
               },
               {
@@ -609,7 +654,9 @@
             "title": "Zalo Id"
           }
         },
-        "required": ["full_name"],
+        "required": [
+          "full_name"
+        ],
         "title": "PersonCreate",
         "type": "object"
       },
@@ -645,7 +692,11 @@
             "type": "string"
           }
         },
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError",
         "type": "object"
       }
@@ -693,7 +744,9 @@
           }
         },
         "summary": "Create Business",
-        "tags": ["businesses"]
+        "tags": [
+          "businesses"
+        ]
       }
     },
     "/health": {
