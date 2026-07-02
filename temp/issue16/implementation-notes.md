@@ -27,6 +27,9 @@ pnpm exec nx run-many -t test --parallel=3
 pnpm exec nx run-many -t build --parallel=3
 uv run --extra dev ruff check .
 docker info --format '{{.ServerVersion}}'
+docker run -d --rm --name linko-issue16-postgres -e POSTGRES_USER=linko -e POSTGRES_PASSWORD=linko -e POSTGRES_DB=linko -p 55432:5432 pgvector/pgvector:pg16
+DATABASE_URL=postgresql+asyncpg://linko:linko@localhost:55432/linko ALEMBIC_DATABASE_URL=postgresql+psycopg://linko:linko@localhost:55432/linko uv run --extra dev alembic upgrade head
+DATABASE_URL=postgresql+asyncpg://linko:linko@localhost:55432/linko ALEMBIC_DATABASE_URL=postgresql+psycopg://linko:linko@localhost:55432/linko uv run --extra dev pytest -q
 ```
 
 ## Verification Results
@@ -38,8 +41,10 @@ docker info --format '{{.ServerVersion}}'
 - Nx run-many build: passed for all three projects.
 - Nx run-many lint: passed after formatting existing `packages/core-utils/index.js`.
 - Backend `ruff check .`: passed via `uv run --extra dev ruff check .`.
+- Backend Alembic migration: passed against an isolated Postgres test container on `localhost:55432`.
+- Backend pytest: passed, 26 tests with 1 Starlette/httpx deprecation warning.
 
 ## Notes
 
 - Local package scripts require `uv` on `PATH`; CI installs it before Nx targets.
-- Backend pytest requires a running Postgres service. Docker Desktop was not reachable in this local session (`docker info` could not connect to `dockerDesktopLinuxEngine`), so full backend integration tests were not rerun here.
+- The default local `5432` port was occupied by an unrelated `linko-postgres` container whose password did not match repo defaults, so backend tests used a separate throwaway container on `55432`.
