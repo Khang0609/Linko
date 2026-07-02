@@ -969,6 +969,7 @@ export default function SignupPage() {
 
           {/* Sign Up button */}
           <button
+            onClick={() => navigate('/onboarding')}
             className="w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-all flex items-center justify-center gap-1.5"
             style={{
               background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
