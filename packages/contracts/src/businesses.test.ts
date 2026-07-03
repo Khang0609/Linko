@@ -1,12 +1,18 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import {
+  AccountCreateSchema,
+  AuthMeResponseSchema,
+  BusinessDetailResponseSchema,
   BusinessCreateSchema,
   BusinessResponseSchema,
+  IndustryResponseSchema,
   NeedCreateSchema,
   OfferCreateSchema,
   PersonCreateSchema,
+  ReferenceEnumsResponseSchema,
   ProblemDetailSchema,
+  SignupResponseSchema,
   type BusinessCreate,
   type BusinessResponse,
 } from './index';
@@ -44,6 +50,75 @@ describe('business onboarding contracts', () => {
     };
 
     expect(BusinessResponseSchema.parse(response)).toMatchObject(response);
+  });
+
+  it('parses Issue 17 auth and reference contracts', () => {
+    expect(
+      AccountCreateSchema.safeParse({ email: 'test@example.com', password: 'Password123!' })
+        .success,
+    ).toBe(true);
+    expect(
+      SignupResponseSchema.safeParse({
+        access_token: 'token',
+        token_type: 'bearer',
+        expires_in: 1800,
+        account_id: '4c43fd62-34ad-4df1-96a6-7d6a0030e866',
+      }).success,
+    ).toBe(true);
+    expect(
+      AuthMeResponseSchema.safeParse({
+        account: {
+          id: '4c43fd62-34ad-4df1-96a6-7d6a0030e866',
+          email: 'test@example.com',
+          is_active: true,
+          created_at: '2026-07-03T08:00:00Z',
+        },
+        businesses: [],
+      }).success,
+    ).toBe(true);
+    expect(
+      IndustryResponseSchema.safeParse({
+        code: 'san_xuat_che_bien',
+        level: 1,
+        name_vi: 'San xuat',
+        sort_order: 1,
+        vsic_2025: ['C'],
+      }).success,
+    ).toBe(true);
+    expect(
+      ReferenceEnumsResponseSchema.safeParse({
+        legal_types: [{ code: 'cong_ty_tnhh_1tv', label: 'Cong ty TNHH 1 thanh vien' }],
+        business_stages: [],
+        employee_ranges: [],
+        revenue_ranges_vnd: [],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('parses BusinessDetailResponse with nested CRUD resources', () => {
+    const detail = {
+      ...validBusinessCreate,
+      id: '4c43fd62-34ad-4df1-96a6-7d6a0030e866',
+      is_active: true,
+      created_at: '2026-07-02T08:00:00Z',
+      data_source: 'self_reported',
+      verification_status: 'unverified',
+      warnings: [],
+      offers: [
+        {
+          ...validOffer,
+          id: 'f7d40e6f-e239-45f4-99fb-4c363fd342f0',
+          business_id: '4c43fd62-34ad-4df1-96a6-7d6a0030e866',
+          is_active: true,
+          created_at: '2026-07-02T08:00:00Z',
+          updated_at: '2026-07-02T08:00:00Z',
+        },
+      ],
+      needs: [],
+      persons: [],
+    };
+
+    expect(BusinessDetailResponseSchema.parse(detail)).toMatchObject(detail);
   });
 
   it('rejects missing required fields', () => {

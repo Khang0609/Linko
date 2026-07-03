@@ -4,6 +4,7 @@ Backend Python cho Linko, gồm:
 
 - Issue #4: schema DB, migrations, Docker local PostgreSQL/pgvector.
 - Issue #7: endpoint onboarding `POST /api/v1/businesses`, validation, idempotency, province normalization, RFC 9457 errors.
+- Issue #17: auth, owner-scoped CRUD APIs, reference data API, CORS, and shared contracts for FE integration.
 
 ## Stack
 
@@ -23,6 +24,9 @@ Required/current variables:
 - `TEST_DATABASE_URL`: test DB URL when a separate test database is used.
 - `PERSON_REQUIRED`: optional feature flag for requiring `persons[]` in onboarding.
 - `IDEMPOTENCY_TTL_SECONDS`: TTL for cached `Idempotency-Key` responses.
+- `FRONTEND_ORIGIN`: CORS allow-list origin, default `http://localhost:5173`.
+- `JWT_SECRET`: required HS256 signing secret. The API fails startup if missing or shorter than 32 characters.
+- `JWT_EXPIRE_MINUTES`: access token lifetime, default 30 minutes.
 
 Secrets and deployment credentials must come from the deployment environment or Secret Manager. Do not hardcode Cloud SQL
 passwords, project IDs, instance names, API keys, or service-account material in this repository.
@@ -96,6 +100,49 @@ uv run pytest -q
 ```
 
 ## API Endpoints
+
+### Auth
+
+- `POST /api/v1/auth/signup`: creates an account and returns a bearer access token.
+- `POST /api/v1/auth/login`: logs in with case-insensitive normalized email and returns a bearer access token.
+- `POST /api/v1/auth/logout`: stateless MVP; client deletes the token.
+- `GET /api/v1/auth/me`: returns the current account, linked person, and owned businesses.
+
+Emails are trimmed/lowercased on signup and login lookup. The `accounts` table also has a unique index on
+`lower(email)`, so duplicate emails with different casing return `409`.
+
+### Business CRUD
+
+`POST /api/v1/businesses` now requires `Authorization: Bearer <token>`. When an account creates its first business,
+`persons[0]` becomes the account's owner contact via `accounts.person_id` and `business_persons.role = 'owner'`.
+
+Additional authenticated endpoints:
+
+- `GET /api/v1/businesses/{business_id}`
+- `PATCH /api/v1/businesses/{business_id}`
+- `DELETE /api/v1/businesses/{business_id}` (soft delete)
+- `GET|POST /api/v1/businesses/{business_id}/offers`
+- `PATCH|DELETE /api/v1/offers/{offer_id}` (delete is soft delete)
+- `GET|POST /api/v1/businesses/{business_id}/needs`
+- `PATCH|DELETE /api/v1/needs/{need_id}` (delete is soft delete)
+- `GET|POST /api/v1/businesses/{business_id}/persons`
+- `PATCH|DELETE /api/v1/persons/{person_id}` (delete is soft delete)
+
+Owner/authorized representative checks return `403` for another account's resources and `401` for anonymous requests.
+
+### Reference Data
+
+Reference endpoints are public and intended for FE dropdowns:
+
+- `GET /api/v1/reference/industries?level=1`
+- `GET /api/v1/reference/industries?level=2`
+- `GET /api/v1/reference/industries?parent=ban_buon_ban_le`
+- `GET /api/v1/reference/intent-types`
+- `GET /api/v1/reference/certifications`
+- `GET /api/v1/reference/enums`
+
+The frontend should render labels but submit backend codes such as `cong_ty_tnhh_1tv`, `find_supplier`, and
+`san_xuat_che_bien`.
 
 ### `POST /api/v1/businesses`
 

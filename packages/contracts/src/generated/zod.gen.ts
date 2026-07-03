@@ -3,6 +3,137 @@
 import * as z from 'zod';
 
 /**
+ * AccountBusinessSummary
+ */
+export const zAccountBusinessSummary = z.object({
+  id: z.uuid(),
+  is_primary: z.boolean().optional().default(false),
+  name: z.string(),
+  role: z.enum(['owner', 'director', 'sales_rep', 'authorized_rep']).nullish(),
+});
+
+/**
+ * AccountCreate
+ */
+export const zAccountCreate = z.object({
+  email: z.string().min(3),
+  password: z.string().min(8),
+});
+
+/**
+ * AccountResponse
+ */
+export const zAccountResponse = z.object({
+  created_at: z.iso.datetime(),
+  email: z.string(),
+  id: z.uuid(),
+  is_active: z.boolean(),
+  last_login_at: z.iso.datetime().nullish(),
+  person_id: z.uuid().nullish(),
+});
+
+/**
+ * BusinessUpdate
+ */
+export const zBusinessUpdate = z.object({
+  business_stage: z
+    .enum(['moi_thanh_lap', 'dang_tang_truong', 'on_dinh', 'mo_rong_vung', 'chuyen_doi_so'])
+    .nullish(),
+  city: z.string().nullish(),
+  description: z.string().nullish(),
+  employee_range: z.enum(['0', '1_5', '6_10', '11_50', '51_100', '101_200', '200_plus']).nullish(),
+  geo_operating: z.array(z.string()).nullish(),
+  industry_l1: z.string().min(1).nullish(),
+  industry_l2: z.string().nullish(),
+  legal_type: z
+    .enum([
+      'ho_kinh_doanh',
+      'doanh_nghiep_tu_nhan',
+      'cong_ty_tnhh_1tv',
+      'cong_ty_tnhh_2tv',
+      'cong_ty_co_phan',
+      'hop_tac_xa',
+      'cong_ty_hop_danh',
+      'khac',
+    ])
+    .nullish(),
+  name: z.string().min(1).nullish(),
+  province: z.string().min(1).nullish(),
+  revenue_range_vnd: z
+    .enum([
+      'duoi_100_trieu',
+      '100_trieu_1_ty',
+      '1_ty_3_ty',
+      '3_ty_10_ty',
+      '10_ty_50_ty',
+      '50_ty_100_ty',
+      '100_ty_300_ty',
+      'tren_300_ty',
+      'khong_tiet_lo',
+    ])
+    .nullish(),
+  tax_id: z.string().nullish(),
+  year_established: z.int().gte(1900).lte(2100).nullish(),
+});
+
+/**
+ * CertificationResponse
+ */
+export const zCertificationResponse = z.object({
+  category: z.string().nullish(),
+  code: z.string(),
+  name_vi: z.string(),
+});
+
+/**
+ * EnumOption
+ */
+export const zEnumOption = z.object({
+  code: z.string(),
+  label: z.string(),
+});
+
+/**
+ * IndustryResponse
+ */
+export const zIndustryResponse = z.object({
+  code: z.string(),
+  level: z.int(),
+  name_en: z.string().nullish(),
+  name_vi: z.string(),
+  parent_code: z.string().nullish(),
+  sort_order: z.int(),
+  vsic_2025: z.array(z.string()).optional(),
+});
+
+/**
+ * IntentTypeResponse
+ */
+export const zIntentTypeResponse = z.object({
+  code: z.string(),
+  complement_code: z.string().nullish(),
+  match_kind: z.string(),
+  name_en: z.string(),
+  name_vi: z.string(),
+  popularity: z.int(),
+});
+
+/**
+ * LoginRequest
+ */
+export const zLoginRequest = z.object({
+  email: z.string().min(3),
+  password: z.string().min(8),
+});
+
+/**
+ * LogoutResponse
+ */
+export const zLogoutResponse = z.object({
+  message: z.string(),
+});
+
+/**
  * NeedCreate
  */
 export const zNeedCreate = z.object({
@@ -25,6 +156,57 @@ export const zNeedCreate = z.object({
 });
 
 /**
+ * NeedResponse
+ */
+export const zNeedResponse = z.object({
+  business_id: z.uuid(),
+  category_l1: z.string().nullish(),
+  category_l2: z.string().nullish(),
+  created_at: z.iso.datetime(),
+  description: z.string().nullish(),
+  geo_scope: z.array(z.string()).optional(),
+  id: z.uuid(),
+  intent_type: z.enum([
+    'find_supplier',
+    'find_buyer',
+    'find_distributor',
+    'find_local_partner',
+    'find_manufacturer',
+    'co_marketing',
+    'find_investment',
+    'service_partnership',
+  ]),
+  is_active: z.boolean(),
+  structured_attrs: z.record(z.string(), z.unknown()).optional(),
+  title: z.string().min(1),
+  updated_at: z.iso.datetime(),
+});
+
+/**
+ * NeedUpdate
+ */
+export const zNeedUpdate = z.object({
+  category_l1: z.string().nullish(),
+  category_l2: z.string().nullish(),
+  description: z.string().nullish(),
+  geo_scope: z.array(z.string()).nullish(),
+  intent_type: z
+    .enum([
+      'find_supplier',
+      'find_buyer',
+      'find_distributor',
+      'find_local_partner',
+      'find_manufacturer',
+      'co_marketing',
+      'find_investment',
+      'service_partnership',
+    ])
+    .nullish(),
+  structured_attrs: z.record(z.string(), z.unknown()).nullish(),
+  title: z.string().min(1).nullish(),
+});
+
+/**
  * OfferCreate
  */
 export const zOfferCreate = z.object({
@@ -44,6 +226,57 @@ export const zOfferCreate = z.object({
   ]),
   structured_attrs: z.record(z.string(), z.unknown()).optional(),
   title: z.string().min(1),
+});
+
+/**
+ * OfferResponse
+ */
+export const zOfferResponse = z.object({
+  business_id: z.uuid(),
+  category_l1: z.string().nullish(),
+  category_l2: z.string().nullish(),
+  created_at: z.iso.datetime(),
+  description: z.string().nullish(),
+  geo_scope: z.array(z.string()).optional(),
+  id: z.uuid(),
+  intent_type: z.enum([
+    'find_supplier',
+    'find_buyer',
+    'find_distributor',
+    'find_local_partner',
+    'find_manufacturer',
+    'co_marketing',
+    'find_investment',
+    'service_partnership',
+  ]),
+  is_active: z.boolean(),
+  structured_attrs: z.record(z.string(), z.unknown()).optional(),
+  title: z.string().min(1),
+  updated_at: z.iso.datetime(),
+});
+
+/**
+ * OfferUpdate
+ */
+export const zOfferUpdate = z.object({
+  category_l1: z.string().nullish(),
+  category_l2: z.string().nullish(),
+  description: z.string().nullish(),
+  geo_scope: z.array(z.string()).nullish(),
+  intent_type: z
+    .enum([
+      'find_supplier',
+      'find_buyer',
+      'find_distributor',
+      'find_local_partner',
+      'find_manufacturer',
+      'co_marketing',
+      'find_investment',
+      'service_partnership',
+    ])
+    .nullish(),
+  structured_attrs: z.record(z.string(), z.unknown()).nullish(),
+  title: z.string().min(1).nullish(),
 });
 
 /**
@@ -122,8 +355,9 @@ export const zBusinessResponse = z.object({
   employee_range: z.enum(['0', '1_5', '6_10', '11_50', '51_100', '101_200', '200_plus']).nullish(),
   geo_operating: z.array(z.string()).optional(),
   id: z.uuid(),
-  industry_l1: z.string().min(1),
+  industry_l1: z.string(),
   industry_l2: z.string().nullish(),
+  is_active: z.boolean().optional().default(true),
   legal_type: z
     .enum([
       'ho_kinh_doanh',
@@ -136,11 +370,11 @@ export const zBusinessResponse = z.object({
       'khac',
     ])
     .nullish(),
-  name: z.string().min(1),
+  name: z.string(),
   needs: z.array(zNeedCreate).optional(),
   offers: z.array(zOfferCreate).optional(),
   persons: z.array(zPersonCreate).optional(),
-  province: z.string().min(1),
+  province: z.string(),
   revenue_range_vnd: z
     .enum([
       'duoi_100_trieu',
@@ -160,7 +394,132 @@ export const zBusinessResponse = z.object({
     .optional()
     .default('unverified'),
   warnings: z.array(z.string()).optional(),
-  year_established: z.int().gte(1900).lte(2100).nullish(),
+  year_established: z.int().nullish(),
+});
+
+/**
+ * PersonResponse
+ */
+export const zPersonResponse = z.object({
+  created_at: z.iso.datetime(),
+  email: z.string().nullish(),
+  full_name: z.string().min(1),
+  id: z.uuid(),
+  is_active: z.boolean(),
+  phone: z.string().nullish(),
+  role: z.enum(['owner', 'director', 'sales_rep', 'authorized_rep']).nullish(),
+  role_title: z.string().nullish(),
+  updated_at: z.iso.datetime(),
+  zalo_id: z.string().nullish(),
+});
+
+/**
+ * AuthMeResponse
+ */
+export const zAuthMeResponse = z.object({
+  account: zAccountResponse,
+  businesses: z.array(zAccountBusinessSummary).optional(),
+  person: zPersonResponse.nullish(),
+});
+
+/**
+ * BusinessDetailResponse
+ */
+export const zBusinessDetailResponse = z.object({
+  business_stage: z
+    .enum(['moi_thanh_lap', 'dang_tang_truong', 'on_dinh', 'mo_rong_vung', 'chuyen_doi_so'])
+    .nullish(),
+  city: z.string().nullish(),
+  created_at: z.iso.datetime(),
+  data_source: z
+    .enum(['self_reported', 'mst_lookup', 'admin_input'])
+    .optional()
+    .default('self_reported'),
+  description: z.string().nullish(),
+  employee_range: z.enum(['0', '1_5', '6_10', '11_50', '51_100', '101_200', '200_plus']).nullish(),
+  geo_operating: z.array(z.string()).optional(),
+  id: z.uuid(),
+  industry_l1: z.string(),
+  industry_l2: z.string().nullish(),
+  is_active: z.boolean().optional().default(true),
+  legal_type: z
+    .enum([
+      'ho_kinh_doanh',
+      'doanh_nghiep_tu_nhan',
+      'cong_ty_tnhh_1tv',
+      'cong_ty_tnhh_2tv',
+      'cong_ty_co_phan',
+      'hop_tac_xa',
+      'cong_ty_hop_danh',
+      'khac',
+    ])
+    .nullish(),
+  name: z.string(),
+  needs: z.array(zNeedResponse).optional(),
+  offers: z.array(zOfferResponse).optional(),
+  persons: z.array(zPersonResponse).optional(),
+  province: z.string(),
+  revenue_range_vnd: z
+    .enum([
+      'duoi_100_trieu',
+      '100_trieu_1_ty',
+      '1_ty_3_ty',
+      '3_ty_10_ty',
+      '10_ty_50_ty',
+      '50_ty_100_ty',
+      '100_ty_300_ty',
+      'tren_300_ty',
+      'khong_tiet_lo',
+    ])
+    .nullish(),
+  tax_id: z.string().nullish(),
+  verification_status: z
+    .enum(['unverified', 'mst_matched', 'manually_verified'])
+    .optional()
+    .default('unverified'),
+  warnings: z.array(z.string()).optional(),
+  year_established: z.int().nullish(),
+});
+
+/**
+ * PersonUpdate
+ */
+export const zPersonUpdate = z.object({
+  email: z.string().nullish(),
+  full_name: z.string().min(1).nullish(),
+  phone: z.string().nullish(),
+  role: z.enum(['owner', 'director', 'sales_rep', 'authorized_rep']).nullish(),
+  role_title: z.string().nullish(),
+  zalo_id: z.string().nullish(),
+});
+
+/**
+ * ReferenceEnumsResponse
+ */
+export const zReferenceEnumsResponse = z.object({
+  business_stages: z.array(zEnumOption),
+  employee_ranges: z.array(zEnumOption),
+  legal_types: z.array(zEnumOption),
+  revenue_ranges_vnd: z.array(zEnumOption),
+});
+
+/**
+ * SignupResponse
+ */
+export const zSignupResponse = z.object({
+  access_token: z.string(),
+  account_id: z.uuid(),
+  expires_in: z.int(),
+  token_type: z.literal('bearer').optional().default('bearer'),
+});
+
+/**
+ * TokenResponse
+ */
+export const zTokenResponse = z.object({
+  access_token: z.string(),
+  expires_in: z.int(),
+  token_type: z.literal('bearer').optional().default('bearer'),
 });
 
 /**
@@ -181,12 +540,223 @@ export const zHttpValidationError = z.object({
   detail: z.array(zValidationError).optional(),
 });
 
+export const zLoginApiV1AuthLoginPostBody = zLoginRequest;
+
+/**
+ * Successful Response
+ */
+export const zLoginApiV1AuthLoginPostResponse = zTokenResponse;
+
+/**
+ * Successful Response
+ */
+export const zLogoutApiV1AuthLogoutPostResponse = zLogoutResponse;
+
+/**
+ * Successful Response
+ */
+export const zMeApiV1AuthMeGetResponse = zAuthMeResponse;
+
+export const zSignupApiV1AuthSignupPostBody = zAccountCreate;
+
+/**
+ * Successful Response
+ */
+export const zSignupApiV1AuthSignupPostResponse = zSignupResponse;
+
 export const zCreateBusinessApiV1BusinessesPostBody = zBusinessCreate;
 
 /**
  * Successful Response
  */
 export const zCreateBusinessApiV1BusinessesPostResponse = zBusinessResponse;
+
+export const zDeleteBusinessApiV1BusinessesBusinessIdDeletePath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zDeleteBusinessApiV1BusinessesBusinessIdDeleteResponse = zBusinessDetailResponse;
+
+export const zGetBusinessApiV1BusinessesBusinessIdGetPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zGetBusinessApiV1BusinessesBusinessIdGetResponse = zBusinessDetailResponse;
+
+export const zUpdateBusinessApiV1BusinessesBusinessIdPatchBody = zBusinessUpdate;
+
+export const zUpdateBusinessApiV1BusinessesBusinessIdPatchPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zUpdateBusinessApiV1BusinessesBusinessIdPatchResponse = zBusinessDetailResponse;
+
+export const zListNeedsApiV1BusinessesBusinessIdNeedsGetPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Response List Needs Api V1 Businesses  Business Id  Needs Get
+ *
+ * Successful Response
+ */
+export const zListNeedsApiV1BusinessesBusinessIdNeedsGetResponse = z.array(zNeedResponse);
+
+export const zCreateNeedApiV1BusinessesBusinessIdNeedsPostBody = zNeedCreate;
+
+export const zCreateNeedApiV1BusinessesBusinessIdNeedsPostPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCreateNeedApiV1BusinessesBusinessIdNeedsPostResponse = zNeedResponse;
+
+export const zListOffersApiV1BusinessesBusinessIdOffersGetPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Response List Offers Api V1 Businesses  Business Id  Offers Get
+ *
+ * Successful Response
+ */
+export const zListOffersApiV1BusinessesBusinessIdOffersGetResponse = z.array(zOfferResponse);
+
+export const zCreateOfferApiV1BusinessesBusinessIdOffersPostBody = zOfferCreate;
+
+export const zCreateOfferApiV1BusinessesBusinessIdOffersPostPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCreateOfferApiV1BusinessesBusinessIdOffersPostResponse = zOfferResponse;
+
+export const zListPersonsApiV1BusinessesBusinessIdPersonsGetPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Response List Persons Api V1 Businesses  Business Id  Persons Get
+ *
+ * Successful Response
+ */
+export const zListPersonsApiV1BusinessesBusinessIdPersonsGetResponse = z.array(zPersonResponse);
+
+export const zCreatePersonApiV1BusinessesBusinessIdPersonsPostBody = zPersonCreate;
+
+export const zCreatePersonApiV1BusinessesBusinessIdPersonsPostPath = z.object({
+  business_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCreatePersonApiV1BusinessesBusinessIdPersonsPostResponse = zPersonResponse;
+
+export const zDeleteNeedApiV1NeedsNeedIdDeletePath = z.object({
+  need_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zDeleteNeedApiV1NeedsNeedIdDeleteResponse = zNeedResponse;
+
+export const zUpdateNeedApiV1NeedsNeedIdPatchBody = zNeedUpdate;
+
+export const zUpdateNeedApiV1NeedsNeedIdPatchPath = z.object({
+  need_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zUpdateNeedApiV1NeedsNeedIdPatchResponse = zNeedResponse;
+
+export const zDeleteOfferApiV1OffersOfferIdDeletePath = z.object({
+  offer_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zDeleteOfferApiV1OffersOfferIdDeleteResponse = zOfferResponse;
+
+export const zUpdateOfferApiV1OffersOfferIdPatchBody = zOfferUpdate;
+
+export const zUpdateOfferApiV1OffersOfferIdPatchPath = z.object({
+  offer_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zUpdateOfferApiV1OffersOfferIdPatchResponse = zOfferResponse;
+
+export const zDeletePersonApiV1PersonsPersonIdDeletePath = z.object({
+  person_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zDeletePersonApiV1PersonsPersonIdDeleteResponse = zPersonResponse;
+
+export const zUpdatePersonApiV1PersonsPersonIdPatchBody = zPersonUpdate;
+
+export const zUpdatePersonApiV1PersonsPersonIdPatchPath = z.object({
+  person_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zUpdatePersonApiV1PersonsPersonIdPatchResponse = zPersonResponse;
+
+/**
+ * Response List Certifications Api V1 Reference Certifications Get
+ *
+ * Successful Response
+ */
+export const zListCertificationsApiV1ReferenceCertificationsGetResponse =
+  z.array(zCertificationResponse);
+
+/**
+ * Successful Response
+ */
+export const zListEnumsApiV1ReferenceEnumsGetResponse = zReferenceEnumsResponse;
+
+export const zListIndustriesApiV1ReferenceIndustriesGetQuery = z.object({
+  level: z.int().gte(1).lte(2).nullish(),
+  parent: z.string().nullish(),
+});
+
+/**
+ * Response List Industries Api V1 Reference Industries Get
+ *
+ * Successful Response
+ */
+export const zListIndustriesApiV1ReferenceIndustriesGetResponse = z.array(zIndustryResponse);
+
+/**
+ * Response List Intent Types Api V1 Reference Intent Types Get
+ *
+ * Successful Response
+ */
+export const zListIntentTypesApiV1ReferenceIntentTypesGetResponse = z.array(zIntentTypeResponse);
 
 /**
  * Response Health Health Get

@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +12,17 @@ class Settings(BaseSettings):
     # Issue #7: keep contacts optional for M1, but make it configurable for product review.
     person_required: bool = False
     idempotency_ttl_seconds: int = 60 * 60 * 24
+    frontend_origin: str = "http://localhost:5173"
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 30
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def jwt_secret_must_be_strong(cls, value: str) -> str:
+        if len(value) < 32:
+            raise ValueError("JWT_SECRET must be at least 32 characters.")
+        return value
 
 
 settings = Settings()

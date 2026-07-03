@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
+
+os.environ.setdefault("JWT_SECRET", "openapi-export-only-not-for-runtime-secret")
 
 from app.main import app
 

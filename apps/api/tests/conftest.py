@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 from copy import deepcopy
 from typing import Any
+
+os.environ.setdefault("JWT_SECRET", "test-only-jwt-secret-with-32-characters")
 
 import pytest
 from fastapi.testclient import TestClient
@@ -18,6 +21,7 @@ TRUNCATE TABLE
     offers,
     needs,
     business_persons,
+    accounts,
     businesses,
     persons,
     idempotency_keys
@@ -38,6 +42,36 @@ def clean_db() -> Generator[None, None, None]:
     yield
     with _sync_engine.begin() as connection:
         connection.execute(text(_TRUNCATE_SQL))
+
+
+@pytest.fixture
+def signup_account(test_client: TestClient):
+    counter = 0
+
+    def _signup(email: str | None = None, password: str = "Password123!") -> dict[str, Any]:
+        nonlocal counter
+        counter += 1
+        account_email = email or f"user{counter}@example.com"
+        response = test_client.post(
+            "/api/v1/auth/signup",
+            json={"email": account_email, "password": password},
+        )
+        assert response.status_code == 201, response.text
+        body = response.json()
+        return {
+            "account_id": body["account_id"],
+            "token": body["access_token"],
+            "headers": {"Authorization": f"Bearer {body['access_token']}"},
+            "email": account_email.strip().lower(),
+            "password": password,
+        }
+
+    return _signup
+
+
+@pytest.fixture
+def auth_headers(clean_db: None, signup_account) -> dict[str, str]:
+    return signup_account()["headers"]
 
 
 @pytest.fixture
