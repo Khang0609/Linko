@@ -78,7 +78,7 @@ def test_offer_need_and_person_crud_with_ownership(
     person_id = person_create.json()["id"]
     person_update = test_client.patch(
         f"/api/v1/persons/{person_id}",
-        json={"phone": "0912345678", "role": "authorized_rep"},
+        json={"phone": "0912345678", "role": "director"},
         headers=owner["headers"],
     )
     person_other_delete = test_client.delete(f"/api/v1/persons/{person_id}", headers=other["headers"])
@@ -103,7 +103,7 @@ def test_offer_need_and_person_crud_with_ownership(
     assert person_create.status_code == 201
     assert person_create.json()["email"] == "lan@example.com"
     assert person_update.status_code == 200
-    assert person_update.json()["role"] == "authorized_rep"
+    assert person_update.json()["role"] == "director"
     assert person_other_delete.status_code == 403
     assert person_delete.status_code == 200
     assert person_delete.json()["is_active"] is False
@@ -127,3 +127,42 @@ def test_business_detail_allows_empty_active_offers_after_soft_delete(
     assert delete_offer.status_code == 200
     assert detail.status_code == 200
     assert detail.json()["offers"] == []
+
+
+def test_contacts_endpoint_rejects_protected_roles(
+    clean_db: None,
+    test_client: TestClient,
+    signup_account,
+    sample_business_payload: dict[str, Any],
+) -> None:
+    owner = signup_account("protected-role-owner@example.com")
+    business_id = _create_business(test_client, sample_business_payload, owner["headers"])
+
+    create_owner = test_client.post(
+        f"/api/v1/businesses/{business_id}/persons",
+        json={"full_name": "Extra Owner", "role": "owner"},
+        headers=owner["headers"],
+    )
+    create_authorized_rep = test_client.post(
+        f"/api/v1/businesses/{business_id}/persons",
+        json={"full_name": "Extra Rep", "role": "authorized_rep"},
+        headers=owner["headers"],
+    )
+    person_create = test_client.post(
+        f"/api/v1/businesses/{business_id}/persons",
+        json={"full_name": "Normal Contact", "role": "sales_rep"},
+        headers=owner["headers"],
+    )
+    update_authorized_rep = test_client.patch(
+        f"/api/v1/persons/{person_create.json()['id']}",
+        json={"role": "authorized_rep"},
+        headers=owner["headers"],
+    )
+
+    assert create_owner.status_code == 422
+    assert create_owner.json()["errors"][0]["code"] == "PROTECTED_ROLE_ASSIGNMENT"
+    assert create_authorized_rep.status_code == 422
+    assert create_authorized_rep.json()["errors"][0]["code"] == "PROTECTED_ROLE_ASSIGNMENT"
+    assert person_create.status_code == 201
+    assert update_authorized_rep.status_code == 422
+    assert update_authorized_rep.json()["errors"][0]["code"] == "PROTECTED_ROLE_ASSIGNMENT"

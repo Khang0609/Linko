@@ -10,13 +10,36 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.exceptions import AppProblemError, AuthorizationError, ConflictError, ResourceNotFoundError
+from app.exceptions import (
+    AppProblemError,
+    AuthorizationError,
+    BusinessValidationError,
+    ConflictError,
+    ResourceNotFoundError,
+)
 from app.models import Account, BusinessPerson, Person
 from app.routers.resource_helpers import get_active_business, problem_error
 from app.schemas import PersonCreate, PersonResponse, PersonUpdate
 from app.security import get_current_account, require_existing_business_access
 
 router = APIRouter()
+PROTECTED_CONTACT_ROLES = {"owner", "authorized_rep"}
+
+
+def _raise_if_protected_contact_role(role: str | None) -> None:
+    if role not in PROTECTED_CONTACT_ROLES:
+        return
+    raise BusinessValidationError(
+        "Owner/authorized_rep is assigned at business creation, not via the contacts endpoint.",
+        [
+            problem_error(
+                "PROTECTED_ROLE_ASSIGNMENT",
+                "role",
+                role,
+                "role owner/authorized_rep cannot be set here.",
+            )
+        ],
+    )
 
 
 def _person_response(person: Person, role: str | None = None) -> PersonResponse:
@@ -92,6 +115,7 @@ async def create_person(
     try:
         await require_existing_business_access(session, account, business_id)
         await get_active_business(session, business_id)
+        _raise_if_protected_contact_role(payload.role)
         person = Person(
             full_name=payload.full_name,
             phone=payload.phone,
@@ -135,6 +159,7 @@ async def update_person(
         person, link = await _person_link_for_account(session, account, person_id)
         update_data = payload.model_dump(exclude_unset=True)
         role = update_data.pop("role", None)
+        _raise_if_protected_contact_role(role)
         for field, value in update_data.items():
             setattr(person, field, value)
         if role is not None:

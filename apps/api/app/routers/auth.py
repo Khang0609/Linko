@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
@@ -108,20 +109,25 @@ async def me(
         if person is not None and person.is_active:
             person_response = PersonResponse.model_validate(person)
 
-        rows = (
-            await session.execute(
-                select(Business, BusinessPerson.role, BusinessPerson.is_primary)
-                .join(BusinessPerson, BusinessPerson.business_id == Business.id)
-                .where(
-                    BusinessPerson.person_id == account.person_id,
-                    Business.is_active.is_(True),
+            rows = (
+                await session.execute(
+                    select(Business, BusinessPerson.role, BusinessPerson.is_primary)
+                    .join(BusinessPerson, BusinessPerson.business_id == Business.id)
+                    .where(
+                        BusinessPerson.person_id == account.person_id,
+                        BusinessPerson.ended_at.is_(None),
+                        Business.is_active.is_(True),
+                    )
+                    .order_by(BusinessPerson.is_primary.desc(), Business.created_at.desc())
                 )
-                .order_by(Business.created_at.desc())
-            )
-        ).all()
-        businesses = [
-            AccountBusinessSummary(id=business.id, name=business.name, role=role, is_primary=is_primary)
-            for business, role, is_primary in rows
-        ]
+            ).all()
+            seen: set[UUID] = set()
+            for business, role, is_primary in rows:
+                if business.id in seen:
+                    continue
+                seen.add(business.id)
+                businesses.append(
+                    AccountBusinessSummary(id=business.id, name=business.name, role=role, is_primary=is_primary)
+                )
 
     return AuthMeResponse(account=_account_response(account), person=person_response, businesses=businesses)

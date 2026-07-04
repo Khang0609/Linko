@@ -5,6 +5,9 @@ from time import perf_counter
 from typing import Any
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, text
+
+from app.config import settings
 
 BUSINESSES_URL = "/api/v1/businesses"
 
@@ -272,6 +275,20 @@ def test_first_business_owner_role_is_returned_when_missing_from_payload(
     assert response.json()["persons"][0]["role"] == "owner"
 
 
+def test_extra_contacts_cannot_assign_protected_roles_on_business_create(
+    test_client: TestClient,
+    auth_headers: dict[str, str],
+    sample_business_payload: dict[str, Any],
+) -> None:
+    payload = deepcopy(sample_business_payload)
+    payload["persons"].append({"full_name": "Extra Owner", "role": "owner"})
+
+    response = _post(test_client, payload, headers=auth_headers)
+
+    assert response.status_code == 422
+    assert response.json()["errors"][0]["code"] == "PROTECTED_ROLE_ASSIGNMENT"
+
+
 def test_business_owner_me_update_and_delete_flow(
     clean_db: None,
     test_client: TestClient,
@@ -312,6 +329,42 @@ def test_business_owner_me_update_and_delete_flow(
     assert delete_response.status_code == 200
     assert delete_response.json()["is_active"] is False
     assert get_after_delete.status_code == 404
+
+
+def test_auth_me_excludes_ended_membership_and_deduplicates_businesses(
+    clean_db: None,
+    test_client: TestClient,
+    signup_account,
+    sample_business_payload: dict[str, Any],
+) -> None:
+    owner = signup_account("me-membership@example.com")
+    create_response = _post(test_client, sample_business_payload, headers=owner["headers"])
+    business_id = create_response.json()["id"]
+    me_before = test_client.get("/api/v1/auth/me", headers=owner["headers"])
+    person_id = me_before.json()["account"]["person_id"]
+
+    engine = create_engine(settings.alembic_database_url)
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO business_persons (business_id, person_id, role, is_primary)
+                VALUES (:business_id, :person_id, 'director', false)
+                """
+            ),
+            {"business_id": business_id, "person_id": person_id},
+        )
+
+    me_with_duplicate_role = test_client.get("/api/v1/auth/me", headers=owner["headers"])
+    delete_owner_person = test_client.delete(f"/api/v1/persons/{person_id}", headers=owner["headers"])
+    me_after_delete = test_client.get("/api/v1/auth/me", headers=owner["headers"])
+
+    assert create_response.status_code == 201
+    assert me_before.status_code == 200
+    assert [business["id"] for business in me_with_duplicate_role.json()["businesses"]] == [business_id]
+    assert delete_owner_person.status_code == 200
+    assert me_after_delete.status_code == 200
+    assert me_after_delete.json()["businesses"] == []
 
 
 def test_response_time_under_1s(

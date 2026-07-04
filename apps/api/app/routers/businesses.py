@@ -36,10 +36,27 @@ from core.idempotency import IdempotencyManager, get_idempotency_key, hash_paylo
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+PROTECTED_CONTACT_ROLES = {"owner", "authorized_rep"}
 
 
 def _problem_error(code: str, field: str, value: Any, message: str) -> dict[str, Any]:
     return {"code": code, "field": field, "value": value, "message": message}
+
+
+def _raise_if_protected_contact_role(role: str | None, field: str) -> None:
+    if role not in PROTECTED_CONTACT_ROLES:
+        return
+    raise BusinessValidationError(
+        "Owner/authorized_rep is assigned by the account owner flow, not via extra contacts.",
+        [
+            _problem_error(
+                "PROTECTED_ROLE_ASSIGNMENT",
+                field,
+                role,
+                "role owner/authorized_rep cannot be set for extra contacts.",
+            )
+        ],
+    )
 
 
 def _industry_codes(payload: BusinessCreate) -> set[str]:
@@ -383,6 +400,7 @@ async def create_business(
                 )
             )
         for person_payload in contact_payloads:
+            _raise_if_protected_contact_role(person_payload.role, "persons.role")
             person = _person_from_payload(person_payload)
             session.add(person)
             await session.flush()
