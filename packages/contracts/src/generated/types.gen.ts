@@ -5,6 +5,84 @@ export type ClientOptions = {
 };
 
 /**
+ * AccountBusinessSummary
+ */
+export type AccountBusinessSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Is Primary
+   */
+  is_primary?: boolean;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Role
+   */
+  role?: 'owner' | 'director' | 'sales_rep' | 'authorized_rep' | null;
+};
+
+/**
+ * AccountCreate
+ */
+export type AccountCreate = {
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * Password
+   */
+  password: string;
+};
+
+/**
+ * AccountResponse
+ */
+export type AccountResponse = {
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Is Active
+   */
+  is_active: boolean;
+  /**
+   * Last Login At
+   */
+  last_login_at?: string | null;
+  /**
+   * Person Id
+   */
+  person_id?: string | null;
+};
+
+/**
+ * AuthMeResponse
+ */
+export type AuthMeResponse = {
+  account: AccountResponse;
+  /**
+   * Businesses
+   */
+  businesses?: Array<AccountBusinessSummary>;
+  person?: PersonResponse | null;
+};
+
+/**
  * BusinessCreate
  */
 export type BusinessCreate = {
@@ -100,6 +178,125 @@ export type BusinessCreate = {
 };
 
 /**
+ * BusinessDetailResponse
+ */
+export type BusinessDetailResponse = {
+  /**
+   * Business Stage
+   */
+  business_stage?:
+    | 'moi_thanh_lap'
+    | 'dang_tang_truong'
+    | 'on_dinh'
+    | 'mo_rong_vung'
+    | 'chuyen_doi_so'
+    | null;
+  /**
+   * City
+   */
+  city?: string | null;
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Data Source
+   */
+  data_source?: 'self_reported' | 'mst_lookup' | 'admin_input';
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Employee Range
+   */
+  employee_range?: '0' | '1_5' | '6_10' | '11_50' | '51_100' | '101_200' | '200_plus' | null;
+  /**
+   * Geo Operating
+   */
+  geo_operating?: Array<string>;
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Industry L1
+   */
+  industry_l1: string;
+  /**
+   * Industry L2
+   */
+  industry_l2?: string | null;
+  /**
+   * Is Active
+   */
+  is_active?: boolean;
+  /**
+   * Legal Type
+   */
+  legal_type?:
+    | 'ho_kinh_doanh'
+    | 'doanh_nghiep_tu_nhan'
+    | 'cong_ty_tnhh_1tv'
+    | 'cong_ty_tnhh_2tv'
+    | 'cong_ty_co_phan'
+    | 'hop_tac_xa'
+    | 'cong_ty_hop_danh'
+    | 'khac'
+    | null;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Needs
+   */
+  needs?: Array<NeedResponse>;
+  /**
+   * Offers
+   */
+  offers?: Array<OfferResponse>;
+  /**
+   * Persons
+   */
+  persons?: Array<PersonResponse>;
+  /**
+   * Province
+   */
+  province: string;
+  /**
+   * Revenue Range Vnd
+   */
+  revenue_range_vnd?:
+    | 'duoi_100_trieu'
+    | '100_trieu_1_ty'
+    | '1_ty_3_ty'
+    | '3_ty_10_ty'
+    | '10_ty_50_ty'
+    | '50_ty_100_ty'
+    | '100_ty_300_ty'
+    | 'tren_300_ty'
+    | 'khong_tiet_lo'
+    | null;
+  /**
+   * Tax Id
+   */
+  tax_id?: string | null;
+  /**
+   * Verification Status
+   */
+  verification_status?: 'unverified' | 'mst_matched' | 'manually_verified';
+  /**
+   * Warnings
+   */
+  warnings?: Array<string>;
+  /**
+   * Year Established
+   */
+  year_established?: number | null;
+};
+
+/**
  * BusinessResponse
  */
 export type BusinessResponse = {
@@ -149,6 +346,10 @@ export type BusinessResponse = {
    * Industry L2
    */
   industry_l2?: string | null;
+  /**
+   * Is Active
+   */
+  is_active?: boolean;
   /**
    * Legal Type
    */
@@ -215,6 +416,121 @@ export type BusinessResponse = {
 };
 
 /**
+ * BusinessUpdate
+ */
+export type BusinessUpdate = {
+  /**
+   * Business Stage
+   */
+  business_stage?:
+    | 'moi_thanh_lap'
+    | 'dang_tang_truong'
+    | 'on_dinh'
+    | 'mo_rong_vung'
+    | 'chuyen_doi_so'
+    | null;
+  /**
+   * City
+   */
+  city?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Employee Range
+   */
+  employee_range?: '0' | '1_5' | '6_10' | '11_50' | '51_100' | '101_200' | '200_plus' | null;
+  /**
+   * Geo Operating
+   */
+  geo_operating?: Array<string> | null;
+  /**
+   * Industry L1
+   */
+  industry_l1?: string | null;
+  /**
+   * Industry L2
+   */
+  industry_l2?: string | null;
+  /**
+   * Legal Type
+   */
+  legal_type?:
+    | 'ho_kinh_doanh'
+    | 'doanh_nghiep_tu_nhan'
+    | 'cong_ty_tnhh_1tv'
+    | 'cong_ty_tnhh_2tv'
+    | 'cong_ty_co_phan'
+    | 'hop_tac_xa'
+    | 'cong_ty_hop_danh'
+    | 'khac'
+    | null;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Province
+   */
+  province?: string | null;
+  /**
+   * Revenue Range Vnd
+   */
+  revenue_range_vnd?:
+    | 'duoi_100_trieu'
+    | '100_trieu_1_ty'
+    | '1_ty_3_ty'
+    | '3_ty_10_ty'
+    | '10_ty_50_ty'
+    | '50_ty_100_ty'
+    | '100_ty_300_ty'
+    | 'tren_300_ty'
+    | 'khong_tiet_lo'
+    | null;
+  /**
+   * Tax Id
+   */
+  tax_id?: string | null;
+  /**
+   * Year Established
+   */
+  year_established?: number | null;
+};
+
+/**
+ * CertificationResponse
+ */
+export type CertificationResponse = {
+  /**
+   * Category
+   */
+  category?: string | null;
+  /**
+   * Code
+   */
+  code: string;
+  /**
+   * Name Vi
+   */
+  name_vi: string;
+};
+
+/**
+ * EnumOption
+ */
+export type EnumOption = {
+  /**
+   * Code
+   */
+  code: string;
+  /**
+   * Label
+   */
+  label: string;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -222,6 +538,94 @@ export type HttpValidationError = {
    * Detail
    */
   detail?: Array<ValidationError>;
+};
+
+/**
+ * IndustryResponse
+ */
+export type IndustryResponse = {
+  /**
+   * Code
+   */
+  code: string;
+  /**
+   * Level
+   */
+  level: number;
+  /**
+   * Name En
+   */
+  name_en?: string | null;
+  /**
+   * Name Vi
+   */
+  name_vi: string;
+  /**
+   * Parent Code
+   */
+  parent_code?: string | null;
+  /**
+   * Sort Order
+   */
+  sort_order: number;
+  /**
+   * Vsic 2025
+   */
+  vsic_2025?: Array<string>;
+};
+
+/**
+ * IntentTypeResponse
+ */
+export type IntentTypeResponse = {
+  /**
+   * Code
+   */
+  code: string;
+  /**
+   * Complement Code
+   */
+  complement_code?: string | null;
+  /**
+   * Match Kind
+   */
+  match_kind: string;
+  /**
+   * Name En
+   */
+  name_en: string;
+  /**
+   * Name Vi
+   */
+  name_vi: string;
+  /**
+   * Popularity
+   */
+  popularity: number;
+};
+
+/**
+ * LoginRequest
+ */
+export type LoginRequest = {
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * Password
+   */
+  password: string;
+};
+
+/**
+ * LogoutResponse
+ */
+export type LogoutResponse = {
+  /**
+   * Message
+   */
+  message: string;
 };
 
 /**
@@ -269,6 +673,115 @@ export type NeedCreate = {
 };
 
 /**
+ * NeedResponse
+ */
+export type NeedResponse = {
+  /**
+   * Business Id
+   */
+  business_id: string;
+  /**
+   * Category L1
+   */
+  category_l1?: string | null;
+  /**
+   * Category L2
+   */
+  category_l2?: string | null;
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Geo Scope
+   */
+  geo_scope?: Array<string>;
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Intent Type
+   */
+  intent_type:
+    | 'find_supplier'
+    | 'find_buyer'
+    | 'find_distributor'
+    | 'find_local_partner'
+    | 'find_manufacturer'
+    | 'co_marketing'
+    | 'find_investment'
+    | 'service_partnership';
+  /**
+   * Is Active
+   */
+  is_active: boolean;
+  /**
+   * Structured Attrs
+   */
+  structured_attrs?: {
+    [key: string]: unknown;
+  };
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Updated At
+   */
+  updated_at: string;
+};
+
+/**
+ * NeedUpdate
+ */
+export type NeedUpdate = {
+  /**
+   * Category L1
+   */
+  category_l1?: string | null;
+  /**
+   * Category L2
+   */
+  category_l2?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Geo Scope
+   */
+  geo_scope?: Array<string> | null;
+  /**
+   * Intent Type
+   */
+  intent_type?:
+    | 'find_supplier'
+    | 'find_buyer'
+    | 'find_distributor'
+    | 'find_local_partner'
+    | 'find_manufacturer'
+    | 'co_marketing'
+    | 'find_investment'
+    | 'service_partnership'
+    | null;
+  /**
+   * Structured Attrs
+   */
+  structured_attrs?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Title
+   */
+  title?: string | null;
+};
+
+/**
  * OfferCreate
  */
 export type OfferCreate = {
@@ -313,6 +826,115 @@ export type OfferCreate = {
 };
 
 /**
+ * OfferResponse
+ */
+export type OfferResponse = {
+  /**
+   * Business Id
+   */
+  business_id: string;
+  /**
+   * Category L1
+   */
+  category_l1?: string | null;
+  /**
+   * Category L2
+   */
+  category_l2?: string | null;
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Geo Scope
+   */
+  geo_scope?: Array<string>;
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Intent Type
+   */
+  intent_type:
+    | 'find_supplier'
+    | 'find_buyer'
+    | 'find_distributor'
+    | 'find_local_partner'
+    | 'find_manufacturer'
+    | 'co_marketing'
+    | 'find_investment'
+    | 'service_partnership';
+  /**
+   * Is Active
+   */
+  is_active: boolean;
+  /**
+   * Structured Attrs
+   */
+  structured_attrs?: {
+    [key: string]: unknown;
+  };
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Updated At
+   */
+  updated_at: string;
+};
+
+/**
+ * OfferUpdate
+ */
+export type OfferUpdate = {
+  /**
+   * Category L1
+   */
+  category_l1?: string | null;
+  /**
+   * Category L2
+   */
+  category_l2?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Geo Scope
+   */
+  geo_scope?: Array<string> | null;
+  /**
+   * Intent Type
+   */
+  intent_type?:
+    | 'find_supplier'
+    | 'find_buyer'
+    | 'find_distributor'
+    | 'find_local_partner'
+    | 'find_manufacturer'
+    | 'co_marketing'
+    | 'find_investment'
+    | 'service_partnership'
+    | null;
+  /**
+   * Structured Attrs
+   */
+  structured_attrs?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Title
+   */
+  title?: string | null;
+};
+
+/**
  * PersonCreate
  */
 export type PersonCreate = {
@@ -343,6 +965,144 @@ export type PersonCreate = {
 };
 
 /**
+ * PersonResponse
+ */
+export type PersonResponse = {
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Email
+   */
+  email?: string | null;
+  /**
+   * Full Name
+   */
+  full_name: string;
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Is Active
+   */
+  is_active: boolean;
+  /**
+   * Phone
+   */
+  phone?: string | null;
+  /**
+   * Role
+   */
+  role?: 'owner' | 'director' | 'sales_rep' | 'authorized_rep' | null;
+  /**
+   * Role Title
+   */
+  role_title?: string | null;
+  /**
+   * Updated At
+   */
+  updated_at: string;
+  /**
+   * Zalo Id
+   */
+  zalo_id?: string | null;
+};
+
+/**
+ * PersonUpdate
+ */
+export type PersonUpdate = {
+  /**
+   * Email
+   */
+  email?: string | null;
+  /**
+   * Full Name
+   */
+  full_name?: string | null;
+  /**
+   * Phone
+   */
+  phone?: string | null;
+  /**
+   * Role
+   */
+  role?: 'owner' | 'director' | 'sales_rep' | 'authorized_rep' | null;
+  /**
+   * Role Title
+   */
+  role_title?: string | null;
+  /**
+   * Zalo Id
+   */
+  zalo_id?: string | null;
+};
+
+/**
+ * ReferenceEnumsResponse
+ */
+export type ReferenceEnumsResponse = {
+  /**
+   * Business Stages
+   */
+  business_stages: Array<EnumOption>;
+  /**
+   * Employee Ranges
+   */
+  employee_ranges: Array<EnumOption>;
+  /**
+   * Legal Types
+   */
+  legal_types: Array<EnumOption>;
+  /**
+   * Revenue Ranges Vnd
+   */
+  revenue_ranges_vnd: Array<EnumOption>;
+};
+
+/**
+ * SignupResponse
+ */
+export type SignupResponse = {
+  /**
+   * Access Token
+   */
+  access_token: string;
+  /**
+   * Account Id
+   */
+  account_id: string;
+  /**
+   * Expires In
+   */
+  expires_in: number;
+  /**
+   * Token Type
+   */
+  token_type?: 'bearer';
+};
+
+/**
+ * TokenResponse
+ */
+export type TokenResponse = {
+  /**
+   * Access Token
+   */
+  access_token: string;
+  /**
+   * Expires In
+   */
+  expires_in: number;
+  /**
+   * Token Type
+   */
+  token_type?: 'bearer';
+};
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -370,6 +1130,93 @@ export type ValidationError = {
   type: string;
 };
 
+export type LoginApiV1AuthLoginPostData = {
+  body: LoginRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/auth/login';
+};
+
+export type LoginApiV1AuthLoginPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type LoginApiV1AuthLoginPostError =
+  LoginApiV1AuthLoginPostErrors[keyof LoginApiV1AuthLoginPostErrors];
+
+export type LoginApiV1AuthLoginPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: TokenResponse;
+};
+
+export type LoginApiV1AuthLoginPostResponse =
+  LoginApiV1AuthLoginPostResponses[keyof LoginApiV1AuthLoginPostResponses];
+
+export type LogoutApiV1AuthLogoutPostData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/auth/logout';
+};
+
+export type LogoutApiV1AuthLogoutPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: LogoutResponse;
+};
+
+export type LogoutApiV1AuthLogoutPostResponse =
+  LogoutApiV1AuthLogoutPostResponses[keyof LogoutApiV1AuthLogoutPostResponses];
+
+export type MeApiV1AuthMeGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/auth/me';
+};
+
+export type MeApiV1AuthMeGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: AuthMeResponse;
+};
+
+export type MeApiV1AuthMeGetResponse = MeApiV1AuthMeGetResponses[keyof MeApiV1AuthMeGetResponses];
+
+export type SignupApiV1AuthSignupPostData = {
+  body: AccountCreate;
+  path?: never;
+  query?: never;
+  url: '/api/v1/auth/signup';
+};
+
+export type SignupApiV1AuthSignupPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SignupApiV1AuthSignupPostError =
+  SignupApiV1AuthSignupPostErrors[keyof SignupApiV1AuthSignupPostErrors];
+
+export type SignupApiV1AuthSignupPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: SignupResponse;
+};
+
+export type SignupApiV1AuthSignupPostResponse =
+  SignupApiV1AuthSignupPostResponses[keyof SignupApiV1AuthSignupPostResponses];
+
 export type CreateBusinessApiV1BusinessesPostData = {
   body: BusinessCreate;
   path?: never;
@@ -396,6 +1243,585 @@ export type CreateBusinessApiV1BusinessesPostResponses = {
 
 export type CreateBusinessApiV1BusinessesPostResponse =
   CreateBusinessApiV1BusinessesPostResponses[keyof CreateBusinessApiV1BusinessesPostResponses];
+
+export type DeleteBusinessApiV1BusinessesBusinessIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}';
+};
+
+export type DeleteBusinessApiV1BusinessesBusinessIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteBusinessApiV1BusinessesBusinessIdDeleteError =
+  DeleteBusinessApiV1BusinessesBusinessIdDeleteErrors[keyof DeleteBusinessApiV1BusinessesBusinessIdDeleteErrors];
+
+export type DeleteBusinessApiV1BusinessesBusinessIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: BusinessDetailResponse;
+};
+
+export type DeleteBusinessApiV1BusinessesBusinessIdDeleteResponse =
+  DeleteBusinessApiV1BusinessesBusinessIdDeleteResponses[keyof DeleteBusinessApiV1BusinessesBusinessIdDeleteResponses];
+
+export type GetBusinessApiV1BusinessesBusinessIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}';
+};
+
+export type GetBusinessApiV1BusinessesBusinessIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetBusinessApiV1BusinessesBusinessIdGetError =
+  GetBusinessApiV1BusinessesBusinessIdGetErrors[keyof GetBusinessApiV1BusinessesBusinessIdGetErrors];
+
+export type GetBusinessApiV1BusinessesBusinessIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: BusinessDetailResponse;
+};
+
+export type GetBusinessApiV1BusinessesBusinessIdGetResponse =
+  GetBusinessApiV1BusinessesBusinessIdGetResponses[keyof GetBusinessApiV1BusinessesBusinessIdGetResponses];
+
+export type UpdateBusinessApiV1BusinessesBusinessIdPatchData = {
+  body: BusinessUpdate;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}';
+};
+
+export type UpdateBusinessApiV1BusinessesBusinessIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateBusinessApiV1BusinessesBusinessIdPatchError =
+  UpdateBusinessApiV1BusinessesBusinessIdPatchErrors[keyof UpdateBusinessApiV1BusinessesBusinessIdPatchErrors];
+
+export type UpdateBusinessApiV1BusinessesBusinessIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: BusinessDetailResponse;
+};
+
+export type UpdateBusinessApiV1BusinessesBusinessIdPatchResponse =
+  UpdateBusinessApiV1BusinessesBusinessIdPatchResponses[keyof UpdateBusinessApiV1BusinessesBusinessIdPatchResponses];
+
+export type ListNeedsApiV1BusinessesBusinessIdNeedsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}/needs';
+};
+
+export type ListNeedsApiV1BusinessesBusinessIdNeedsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListNeedsApiV1BusinessesBusinessIdNeedsGetError =
+  ListNeedsApiV1BusinessesBusinessIdNeedsGetErrors[keyof ListNeedsApiV1BusinessesBusinessIdNeedsGetErrors];
+
+export type ListNeedsApiV1BusinessesBusinessIdNeedsGetResponses = {
+  /**
+   * Response List Needs Api V1 Businesses  Business Id  Needs Get
+   *
+   * Successful Response
+   */
+  200: Array<NeedResponse>;
+};
+
+export type ListNeedsApiV1BusinessesBusinessIdNeedsGetResponse =
+  ListNeedsApiV1BusinessesBusinessIdNeedsGetResponses[keyof ListNeedsApiV1BusinessesBusinessIdNeedsGetResponses];
+
+export type CreateNeedApiV1BusinessesBusinessIdNeedsPostData = {
+  body: NeedCreate;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}/needs';
+};
+
+export type CreateNeedApiV1BusinessesBusinessIdNeedsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateNeedApiV1BusinessesBusinessIdNeedsPostError =
+  CreateNeedApiV1BusinessesBusinessIdNeedsPostErrors[keyof CreateNeedApiV1BusinessesBusinessIdNeedsPostErrors];
+
+export type CreateNeedApiV1BusinessesBusinessIdNeedsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: NeedResponse;
+};
+
+export type CreateNeedApiV1BusinessesBusinessIdNeedsPostResponse =
+  CreateNeedApiV1BusinessesBusinessIdNeedsPostResponses[keyof CreateNeedApiV1BusinessesBusinessIdNeedsPostResponses];
+
+export type ListOffersApiV1BusinessesBusinessIdOffersGetData = {
+  body?: never;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}/offers';
+};
+
+export type ListOffersApiV1BusinessesBusinessIdOffersGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListOffersApiV1BusinessesBusinessIdOffersGetError =
+  ListOffersApiV1BusinessesBusinessIdOffersGetErrors[keyof ListOffersApiV1BusinessesBusinessIdOffersGetErrors];
+
+export type ListOffersApiV1BusinessesBusinessIdOffersGetResponses = {
+  /**
+   * Response List Offers Api V1 Businesses  Business Id  Offers Get
+   *
+   * Successful Response
+   */
+  200: Array<OfferResponse>;
+};
+
+export type ListOffersApiV1BusinessesBusinessIdOffersGetResponse =
+  ListOffersApiV1BusinessesBusinessIdOffersGetResponses[keyof ListOffersApiV1BusinessesBusinessIdOffersGetResponses];
+
+export type CreateOfferApiV1BusinessesBusinessIdOffersPostData = {
+  body: OfferCreate;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}/offers';
+};
+
+export type CreateOfferApiV1BusinessesBusinessIdOffersPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateOfferApiV1BusinessesBusinessIdOffersPostError =
+  CreateOfferApiV1BusinessesBusinessIdOffersPostErrors[keyof CreateOfferApiV1BusinessesBusinessIdOffersPostErrors];
+
+export type CreateOfferApiV1BusinessesBusinessIdOffersPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: OfferResponse;
+};
+
+export type CreateOfferApiV1BusinessesBusinessIdOffersPostResponse =
+  CreateOfferApiV1BusinessesBusinessIdOffersPostResponses[keyof CreateOfferApiV1BusinessesBusinessIdOffersPostResponses];
+
+export type ListPersonsApiV1BusinessesBusinessIdPersonsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}/persons';
+};
+
+export type ListPersonsApiV1BusinessesBusinessIdPersonsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListPersonsApiV1BusinessesBusinessIdPersonsGetError =
+  ListPersonsApiV1BusinessesBusinessIdPersonsGetErrors[keyof ListPersonsApiV1BusinessesBusinessIdPersonsGetErrors];
+
+export type ListPersonsApiV1BusinessesBusinessIdPersonsGetResponses = {
+  /**
+   * Response List Persons Api V1 Businesses  Business Id  Persons Get
+   *
+   * Successful Response
+   */
+  200: Array<PersonResponse>;
+};
+
+export type ListPersonsApiV1BusinessesBusinessIdPersonsGetResponse =
+  ListPersonsApiV1BusinessesBusinessIdPersonsGetResponses[keyof ListPersonsApiV1BusinessesBusinessIdPersonsGetResponses];
+
+export type CreatePersonApiV1BusinessesBusinessIdPersonsPostData = {
+  body: PersonCreate;
+  path: {
+    /**
+     * Business Id
+     */
+    business_id: string;
+  };
+  query?: never;
+  url: '/api/v1/businesses/{business_id}/persons';
+};
+
+export type CreatePersonApiV1BusinessesBusinessIdPersonsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreatePersonApiV1BusinessesBusinessIdPersonsPostError =
+  CreatePersonApiV1BusinessesBusinessIdPersonsPostErrors[keyof CreatePersonApiV1BusinessesBusinessIdPersonsPostErrors];
+
+export type CreatePersonApiV1BusinessesBusinessIdPersonsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: PersonResponse;
+};
+
+export type CreatePersonApiV1BusinessesBusinessIdPersonsPostResponse =
+  CreatePersonApiV1BusinessesBusinessIdPersonsPostResponses[keyof CreatePersonApiV1BusinessesBusinessIdPersonsPostResponses];
+
+export type DeleteNeedApiV1NeedsNeedIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Need Id
+     */
+    need_id: string;
+  };
+  query?: never;
+  url: '/api/v1/needs/{need_id}';
+};
+
+export type DeleteNeedApiV1NeedsNeedIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteNeedApiV1NeedsNeedIdDeleteError =
+  DeleteNeedApiV1NeedsNeedIdDeleteErrors[keyof DeleteNeedApiV1NeedsNeedIdDeleteErrors];
+
+export type DeleteNeedApiV1NeedsNeedIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: NeedResponse;
+};
+
+export type DeleteNeedApiV1NeedsNeedIdDeleteResponse =
+  DeleteNeedApiV1NeedsNeedIdDeleteResponses[keyof DeleteNeedApiV1NeedsNeedIdDeleteResponses];
+
+export type UpdateNeedApiV1NeedsNeedIdPatchData = {
+  body: NeedUpdate;
+  path: {
+    /**
+     * Need Id
+     */
+    need_id: string;
+  };
+  query?: never;
+  url: '/api/v1/needs/{need_id}';
+};
+
+export type UpdateNeedApiV1NeedsNeedIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateNeedApiV1NeedsNeedIdPatchError =
+  UpdateNeedApiV1NeedsNeedIdPatchErrors[keyof UpdateNeedApiV1NeedsNeedIdPatchErrors];
+
+export type UpdateNeedApiV1NeedsNeedIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: NeedResponse;
+};
+
+export type UpdateNeedApiV1NeedsNeedIdPatchResponse =
+  UpdateNeedApiV1NeedsNeedIdPatchResponses[keyof UpdateNeedApiV1NeedsNeedIdPatchResponses];
+
+export type DeleteOfferApiV1OffersOfferIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Offer Id
+     */
+    offer_id: string;
+  };
+  query?: never;
+  url: '/api/v1/offers/{offer_id}';
+};
+
+export type DeleteOfferApiV1OffersOfferIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteOfferApiV1OffersOfferIdDeleteError =
+  DeleteOfferApiV1OffersOfferIdDeleteErrors[keyof DeleteOfferApiV1OffersOfferIdDeleteErrors];
+
+export type DeleteOfferApiV1OffersOfferIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: OfferResponse;
+};
+
+export type DeleteOfferApiV1OffersOfferIdDeleteResponse =
+  DeleteOfferApiV1OffersOfferIdDeleteResponses[keyof DeleteOfferApiV1OffersOfferIdDeleteResponses];
+
+export type UpdateOfferApiV1OffersOfferIdPatchData = {
+  body: OfferUpdate;
+  path: {
+    /**
+     * Offer Id
+     */
+    offer_id: string;
+  };
+  query?: never;
+  url: '/api/v1/offers/{offer_id}';
+};
+
+export type UpdateOfferApiV1OffersOfferIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateOfferApiV1OffersOfferIdPatchError =
+  UpdateOfferApiV1OffersOfferIdPatchErrors[keyof UpdateOfferApiV1OffersOfferIdPatchErrors];
+
+export type UpdateOfferApiV1OffersOfferIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: OfferResponse;
+};
+
+export type UpdateOfferApiV1OffersOfferIdPatchResponse =
+  UpdateOfferApiV1OffersOfferIdPatchResponses[keyof UpdateOfferApiV1OffersOfferIdPatchResponses];
+
+export type DeletePersonApiV1PersonsPersonIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Person Id
+     */
+    person_id: string;
+  };
+  query?: never;
+  url: '/api/v1/persons/{person_id}';
+};
+
+export type DeletePersonApiV1PersonsPersonIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeletePersonApiV1PersonsPersonIdDeleteError =
+  DeletePersonApiV1PersonsPersonIdDeleteErrors[keyof DeletePersonApiV1PersonsPersonIdDeleteErrors];
+
+export type DeletePersonApiV1PersonsPersonIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonResponse;
+};
+
+export type DeletePersonApiV1PersonsPersonIdDeleteResponse =
+  DeletePersonApiV1PersonsPersonIdDeleteResponses[keyof DeletePersonApiV1PersonsPersonIdDeleteResponses];
+
+export type UpdatePersonApiV1PersonsPersonIdPatchData = {
+  body: PersonUpdate;
+  path: {
+    /**
+     * Person Id
+     */
+    person_id: string;
+  };
+  query?: never;
+  url: '/api/v1/persons/{person_id}';
+};
+
+export type UpdatePersonApiV1PersonsPersonIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdatePersonApiV1PersonsPersonIdPatchError =
+  UpdatePersonApiV1PersonsPersonIdPatchErrors[keyof UpdatePersonApiV1PersonsPersonIdPatchErrors];
+
+export type UpdatePersonApiV1PersonsPersonIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonResponse;
+};
+
+export type UpdatePersonApiV1PersonsPersonIdPatchResponse =
+  UpdatePersonApiV1PersonsPersonIdPatchResponses[keyof UpdatePersonApiV1PersonsPersonIdPatchResponses];
+
+export type ListCertificationsApiV1ReferenceCertificationsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/reference/certifications';
+};
+
+export type ListCertificationsApiV1ReferenceCertificationsGetResponses = {
+  /**
+   * Response List Certifications Api V1 Reference Certifications Get
+   *
+   * Successful Response
+   */
+  200: Array<CertificationResponse>;
+};
+
+export type ListCertificationsApiV1ReferenceCertificationsGetResponse =
+  ListCertificationsApiV1ReferenceCertificationsGetResponses[keyof ListCertificationsApiV1ReferenceCertificationsGetResponses];
+
+export type ListEnumsApiV1ReferenceEnumsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/reference/enums';
+};
+
+export type ListEnumsApiV1ReferenceEnumsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ReferenceEnumsResponse;
+};
+
+export type ListEnumsApiV1ReferenceEnumsGetResponse =
+  ListEnumsApiV1ReferenceEnumsGetResponses[keyof ListEnumsApiV1ReferenceEnumsGetResponses];
+
+export type ListIndustriesApiV1ReferenceIndustriesGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Level
+     */
+    level?: number | null;
+    /**
+     * Parent
+     */
+    parent?: string | null;
+  };
+  url: '/api/v1/reference/industries';
+};
+
+export type ListIndustriesApiV1ReferenceIndustriesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListIndustriesApiV1ReferenceIndustriesGetError =
+  ListIndustriesApiV1ReferenceIndustriesGetErrors[keyof ListIndustriesApiV1ReferenceIndustriesGetErrors];
+
+export type ListIndustriesApiV1ReferenceIndustriesGetResponses = {
+  /**
+   * Response List Industries Api V1 Reference Industries Get
+   *
+   * Successful Response
+   */
+  200: Array<IndustryResponse>;
+};
+
+export type ListIndustriesApiV1ReferenceIndustriesGetResponse =
+  ListIndustriesApiV1ReferenceIndustriesGetResponses[keyof ListIndustriesApiV1ReferenceIndustriesGetResponses];
+
+export type ListIntentTypesApiV1ReferenceIntentTypesGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/reference/intent-types';
+};
+
+export type ListIntentTypesApiV1ReferenceIntentTypesGetResponses = {
+  /**
+   * Response List Intent Types Api V1 Reference Intent Types Get
+   *
+   * Successful Response
+   */
+  200: Array<IntentTypeResponse>;
+};
+
+export type ListIntentTypesApiV1ReferenceIntentTypesGetResponse =
+  ListIntentTypesApiV1ReferenceIntentTypesGetResponses[keyof ListIntentTypesApiV1ReferenceIntentTypesGetResponses];
 
 export type HealthHealthGetData = {
   body?: never;

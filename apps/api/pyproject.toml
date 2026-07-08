@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Linko backend - business matching platform (Issue #4)"
 requires-python = ">=3.11,<3.13"
 dependencies = [
+    "argon2-cffi>=23.1",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "sqlalchemy>=2.0",
@@ -12,6 +13,7 @@ dependencies = [
     "psycopg[binary]>=3.2",
     "pgvector>=0.3",
     "pydantic-settings>=2.0",
+    "pyjwt>=2.10",
     "cloud-sql-python-connector[asyncpg]>=1.9",
 ]
 

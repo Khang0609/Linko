@@ -25,10 +25,43 @@ class AppProblemError(Exception):
     title = "Internal Server Error"
     type = "about:blank"
 
-    def __init__(self, detail: str, errors: list[dict[str, Any]] | None = None) -> None:
+    def __init__(
+        self,
+        detail: str,
+        errors: list[dict[str, Any]] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         super().__init__(detail)
         self.detail = detail
         self.errors = errors
+        self.headers = headers
+
+
+class AuthenticationError(AppProblemError):
+    status_code = 401
+    title = "Authentication required"
+    type = "https://linko.vn/problems/authentication-required"
+
+    def __init__(self, detail: str = "A valid bearer token is required.") -> None:
+        super().__init__(detail, headers={"WWW-Authenticate": "Bearer"})
+
+
+class AuthorizationError(AppProblemError):
+    status_code = 403
+    title = "Forbidden"
+    type = "https://linko.vn/problems/forbidden"
+
+
+class ResourceNotFoundError(AppProblemError):
+    status_code = 404
+    title = "Not Found"
+    type = "https://linko.vn/problems/not-found"
+
+
+class ConflictError(AppProblemError):
+    status_code = 409
+    title = "Conflict"
+    type = "https://linko.vn/problems/conflict"
 
 
 class BusinessValidationError(AppProblemError):
@@ -101,7 +134,9 @@ def _clean_validation_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any
 
 
 async def app_problem_handler(request: Request, exc: AppProblemError) -> JSONResponse:
-    headers = {"Retry-After": "2"} if isinstance(exc, IdempotencyConflictError) else None
+    headers = dict(exc.headers or {})
+    if isinstance(exc, IdempotencyConflictError):
+        headers["Retry-After"] = "2"
     return problem_response(
         request,
         status_code=exc.status_code,
@@ -109,7 +144,7 @@ async def app_problem_handler(request: Request, exc: AppProblemError) -> JSONRes
         detail=exc.detail,
         type_=exc.type,
         errors=exc.errors,
-        headers=headers,
+        headers=headers or None,
     )
 
 
