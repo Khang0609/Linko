@@ -58,9 +58,11 @@ def _validate_enum(value: str | None, valid: set[str], field_name: str) -> tuple
     return None, FieldMeta(confidence=None, needs_review=True)
 
 
-def _validate_industry_l1(code: str | None) -> tuple[str | None, FieldMeta]:
-    """Validate L1 industry code against seed catalog."""
+def _validate_industry_l1(code: str | list[str] | None) -> tuple[str | None, FieldMeta]:
+    """Validate L1 industry code against seed catalog. Fails if list/array."""
     if code is None:
+        return None, FieldMeta(confidence=None, needs_review=True)
+    if isinstance(code, list) or not isinstance(code, str):
         return None, FieldMeta(confidence=None, needs_review=True)
     entry = _INDUSTRY_CATALOG.get(code)
     if entry is None:
@@ -71,10 +73,12 @@ def _validate_industry_l1(code: str | None) -> tuple[str | None, FieldMeta]:
     return code, FieldMeta(confidence=None, needs_review=False)
 
 
-def _validate_industry_l2(code: str | None, validated_l1: str | None) -> tuple[str | None, FieldMeta]:
-    """Validate L2 industry code: must exist, be level=2, active, and parent must match validated L1."""
+def _validate_industry_l2(code: str | list[str] | None, validated_l1: str | None) -> tuple[str | None, FieldMeta]:
+    """Validate L2 industry code: must exist, be level=2, active, parent must match. Fails if list/array."""
     if code is None:
         return None, FieldMeta(confidence=None, needs_review=False)
+    if isinstance(code, list) or not isinstance(code, str):
+        return None, FieldMeta(confidence=None, needs_review=True)
     entry = _INDUSTRY_CATALOG.get(code)
     if entry is None:
         return None, FieldMeta(confidence=None, needs_review=True)
@@ -166,6 +170,10 @@ def post_validate(
     # --- Offers/Needs intent validation ---
     draft.offers = _validate_intent_in_items(draft.offers, warnings, "offer")
     draft.needs = _validate_intent_in_items(draft.needs, warnings, "need")
+
+    # A7: Set needs_review=True for the intent fields if no intents are present
+    meta["offers"] = FieldMeta(confidence=None, needs_review=not draft.offers)
+    meta["needs"] = FieldMeta(confidence=None, needs_review=not draft.needs)
 
     # --- persons always empty ---
     draft.persons = []

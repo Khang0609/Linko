@@ -223,6 +223,38 @@ def test_mapping_industry_l1_l2_mismatch() -> None:
     assert validated.industry_l2 is None  # Nulled due to mismatch
     assert meta["industry_l2"].needs_review is True
 
+def test_mapping_industry_array_fails() -> None:
+    # A9: If prediction for industry_l1 or industry_l2 is a list/array, it must fail and return None + needs_review=True
+    load_industry_catalog([
+        {"code": "san_xuat", "level": 1, "parent_code": None, "is_active": True},
+        {"code": "san_xuat.che_bien", "level": 2, "parent_code": "san_xuat", "is_active": True},
+    ])
+
+    draft = BusinessDraft(
+        industry_l1=["san_xuat", "another"],  # array!
+        industry_l2=["san_xuat.che_bien"],    # array!
+    )
+
+    validated, meta, warnings = post_validate(draft)
+    assert validated.industry_l1 is None
+    assert meta["industry_l1"].needs_review is True
+    assert validated.industry_l2 is None
+    assert meta["industry_l2"].needs_review is True
+
+
+def test_mapping_empty_intents_needs_review() -> None:
+    # A7: If offers/needs are empty (no intent), needs_review=True is set for intent fields
+    draft = BusinessDraft(
+        offers=[],
+        needs=[],
+    )
+
+    validated, meta, warnings = post_validate(draft)
+    assert not validated.offers
+    assert not validated.needs
+    assert meta["offers"].needs_review is True
+    assert meta["needs"].needs_review is True
+    assert "NO_OFFERS_OR_NEEDS" in warnings
 
 # ===========================================================================
 # 6. Service & Router Integration Tests

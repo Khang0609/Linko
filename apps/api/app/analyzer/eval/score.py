@@ -67,12 +67,12 @@ def score_case(actual: BusinessDraft, expected: dict[str, Any]) -> dict[str, boo
 
     # 2. Offers & Needs intents set comparison
     # Expected offers and needs intent sets
-    exp_offers = {o.get("intent_type") for o in expected.get("offers", []) if o.get("intent_type")}
-    exp_needs = {n.get("intent_type") for n in expected.get("needs", []) if n.get("intent_type")}
+    exp_offers = {normalize_val(o.get("intent_type")) for o in expected.get("offers", []) if o.get("intent_type")}
+    exp_needs = {normalize_val(n.get("intent_type")) for n in expected.get("needs", []) if n.get("intent_type")}
 
     # Actual offers and needs intent sets
-    act_offers = {o.intent_type for o in actual.offers if o.intent_type}
-    act_needs = {n.intent_type for n in actual.needs if n.intent_type}
+    act_offers = {normalize_val(o.intent_type) for o in actual.offers if o.intent_type}
+    act_needs = {normalize_val(n.intent_type) for n in actual.needs if n.intent_type}
 
     results["offers_intents"] = act_offers == exp_offers
     results["needs_intents"] = act_needs == exp_needs
