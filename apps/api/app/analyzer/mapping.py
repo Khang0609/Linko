@@ -172,6 +172,7 @@ def post_validate(
     draft.needs = _validate_intent_in_items(draft.needs, warnings, "need")
 
     # A7: Set needs_review=True for the intent fields if no intents are present
+    meta["intent"] = FieldMeta(confidence=None, needs_review=not draft.offers and not draft.needs)
     meta["offers"] = FieldMeta(confidence=None, needs_review=not draft.offers)
     meta["needs"] = FieldMeta(confidence=None, needs_review=not draft.needs)
 

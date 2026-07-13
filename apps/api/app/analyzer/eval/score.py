@@ -55,15 +55,24 @@ def score_case(actual: BusinessDraft, expected: dict[str, Any]) -> dict[str, boo
     """Score a single extraction result against its expected gold standard.
 
     Returns:
-        dict mapping field_name → is_correct (bool)
+       dict mapping field_name → is_correct (bool)
     """
     results: dict[str, bool] = {}
 
     # 1. Scored standard fields
     for field in _SCORED_FIELDS:
+        # A8: Exclude industry_l2 when industry_l2_applicable is false
+        if field == "industry_l2" and expected.get("industry_l2_applicable") is False:
+            continue
+
         exp_val = expected.get(field)
         act_val = getattr(actual, field, None)
-        results[field] = compare_fields(act_val, exp_val)
+
+        # A9: Scorer FAILS if prediction is an array/list
+        if field == "industry_l2" and isinstance(act_val, list):
+            results[field] = False
+        else:
+            results[field] = compare_fields(act_val, exp_val)
 
     # 2. Offers & Needs intents set comparison
     # Expected offers and needs intent sets
@@ -76,6 +85,32 @@ def score_case(actual: BusinessDraft, expected: dict[str, Any]) -> dict[str, boo
 
     results["offers_intents"] = act_offers == exp_offers
     results["needs_intents"] = act_needs == exp_needs
+
+    # A8: map "intent (...)" -> "intent_types"
+    # Combine actual intent types
+    act_all_intents = act_offers | act_needs
+
+    # Parse expected intent types from keys that normalize/contain "intent"
+    exp_intents_all = set()
+    for k, v in expected.items():
+        k_norm = normalize_val(k)
+        if k_norm and ("intent" in k_norm or k_norm == "intent"):
+            if isinstance(v, list):
+                for item in v:
+                    if isinstance(item, dict):
+                        val = item.get("intent_type") or item.get("intent") or item.get("intent_types")
+                        if val:
+                            exp_intents_all.add(normalize_val(val))
+                    elif isinstance(item, str):
+                        exp_intents_all.add(normalize_val(item))
+            elif isinstance(v, str):
+                exp_intents_all.add(normalize_val(v))
+
+    # If no custom intent field was found, fall back to union of exp_offers & exp_needs
+    if not exp_intents_all:
+        exp_intents_all = exp_offers | exp_needs
+
+    results["intent_types"] = act_all_intents == exp_intents_all
 
     return results
 

@@ -252,9 +252,54 @@ def test_mapping_empty_intents_needs_review() -> None:
     validated, meta, warnings = post_validate(draft)
     assert not validated.offers
     assert not validated.needs
+    assert meta["intent"].needs_review is True
     assert meta["offers"].needs_review is True
     assert meta["needs"].needs_review is True
     assert "NO_OFFERS_OR_NEEDS" in warnings
+
+
+def test_scorer_codex_rules() -> None:
+    from app.analyzer.eval.score import normalize_val, score_case
+    from app.analyzer.schemas import OfferDraft
+
+    # A8: parentheticals stripping
+    assert normalize_val("intent (không nêu rõ)") == "intent"
+    assert normalize_val("tax_id (không có)") == "tax_id"
+
+    # A8: excludes industry_l2 when industry_l2_applicable is false
+    actual = BusinessDraft(
+        name="Test",
+        industry_l2="something",  # actual has l2
+    )
+    expected = {
+        "name": "Test",
+        "industry_l2": "different",
+        "industry_l2_applicable": False,  # should be excluded
+    }
+    results = score_case(actual, expected)
+    assert "name" in results
+    assert "industry_l2" not in results  # excluded!
+
+    # A8: maps "intent (...)" -> "intent_types"
+    actual_with_intents = BusinessDraft(
+        offers=[OfferDraft(intent_type="find_buyer")],
+    )
+    expected_with_intent_key = {
+        "intent (không nêu rõ)": ["find_buyer"],
+    }
+    results_intent = score_case(actual_with_intents, expected_with_intent_key)
+    assert results_intent["intent_types"] is True
+
+    # A9: scorer FAILS if prediction is an array/list
+    actual_array_l2 = BusinessDraft(
+        industry_l2=["some_industry", "another"],  # array prediction
+    )
+    expected_l2 = {
+        "industry_l2": "some_industry",
+    }
+    results_l2 = score_case(actual_array_l2, expected_l2)
+    assert results_l2["industry_l2"] is False
+
 
 # ===========================================================================
 # 6. Service & Router Integration Tests
