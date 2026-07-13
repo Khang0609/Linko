@@ -1,4 +1,4 @@
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +16,14 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30
+
+    # Issue #10: Smart Analyzer & Vertex AI matching configurations
+    gemini_project: str | None = Field(default=None, validation_alias="vertex_project")
+    gemini_region: str = Field(default="asia-southeast1", validation_alias="vertex_location")
+    gemini_model: str = Field(default="gemini-2.5-flash-lite", validation_alias="gemini_model")
+    analyzer_timeout_seconds: float = Field(default=5.0, validation_alias="analyzer_deadline_seconds")
+    analyzer_provider: str = "mock"
+
 
     @field_validator("jwt_secret")
     @classmethod
