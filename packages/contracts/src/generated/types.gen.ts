@@ -375,11 +375,11 @@ export type BusinessDraft = {
   /**
    * Industry L1
    */
-  industry_l1?: string | null;
+  industry_l1?: string | Array<string> | null;
   /**
    * Industry L2
    */
-  industry_l2?: string | null;
+  industry_l2?: string | Array<string> | null;
   /**
    * Legal Type
    */
