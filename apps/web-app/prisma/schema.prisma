@@ -1,0 +1,276 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ===== Enums =====
+enum CompanyStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+}
+
+enum StatAxis {
+  GENERAL
+  FINANCE
+  WORKFORCE
+  PRODUCT
+  OPERATIONS
+}
+
+enum StatDataType {
+  NUMBER
+  TEXT
+  BOOLEAN
+  DATE
+  ENUM
+}
+
+enum Visibility {
+  PRIVATE
+  MATCHING
+  PUBLIC
+}
+
+enum DataSource {
+  MANUAL
+  AI
+  FILE
+  LINK
+  API
+}
+
+enum AttributeType {
+  STRENGTH
+  WEAKNESS
+  NEED
+  CAPABILITY
+}
+
+enum SourceType {
+  FILE
+  LINK
+}
+
+enum ExtractionStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum EmbeddingKind {
+  PROFILE
+  STRENGTH
+  WEAKNESS
+}
+
+enum MatchStatus {
+  SUGGESTED
+  VIEWED
+  ACCEPTED
+  REJECTED
+}
+
+// ===== Danh tính =====
+model Company {
+  id                String        @id @default(cuid())
+  name              String
+  slug              String        @unique
+  taxId             String?       @unique
+  description       String?
+  website           String?
+  logoUrl           String?
+  foundedYear       Int?
+  country           String?
+  city              String?
+  sizeCategory      String?
+  status            CompanyStatus @default(DRAFT)
+  defaultVisibility Visibility    @default(MATCHING)
+
+  industryId String?
+  industry   Industry? @relation(fields: [industryId], references: [id])
+
+  members     CompanyMembership[]
+  sources     SourceDocument[]
+  statValues  CompanyStatValue[]
+  snapshots   StatSnapshot[]
+  attributes  CompanyAttribute[]
+  embeddings  CompanyEmbedding[]
+  matchesFrom MatchResult[]       @relation("MatchSource")
+  matchesTo   MatchResult[]       @relation("MatchTarget")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([industryId])
+  @@index([status])
+}
+
+model User {
+  id          String              @id @default(cuid())
+  email       String              @unique
+  name        String?
+  memberships CompanyMembership[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model CompanyMembership {
+  id        String   @id @default(cuid())
+  companyId String
+  userId    String
+  role      String   @default("owner")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, userId])
+}
+
+model Industry {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  name      String
+  parentId  String?
+  parent    Industry?  @relation("IndustryTree", fields: [parentId], references: [id])
+  children  Industry[] @relation("IndustryTree")
+  companies Company[]
+}
+
+// ===== Bóc tách hồ sơ (M1) =====
+model SourceDocument {
+  id           String           @id @default(cuid())
+  companyId    String
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type         SourceType
+  fileUrl      String?
+  linkUrl      String?
+  mimeType     String?
+  status       ExtractionStatus @default(PENDING)
+  uploadedById String?
+  createdAt    DateTime         @default(now())
+  jobs         ExtractionJob[]
+
+  @@index([companyId])
+}
+
+model ExtractionJob {
+  id               String           @id @default(cuid())
+  sourceDocumentId String
+  source           SourceDocument   @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+  model            String           @default("gemini-1.5")
+  status           ExtractionStatus @default(PENDING)
+  rawResult        Json?
+  confidence       Float?
+  error            String?
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  createdAt        DateTime         @default(now())
+
+  @@index([sourceDocumentId])
+}
+
+// ===== Chỉ số danh tính (catalog + value) =====
+model StatDefinition {
+  id                String             @id @default(cuid())
+  key               String             @unique
+  label             String
+  axis              StatAxis
+  dataType          StatDataType
+  unit              String?
+  isMatchingFeature Boolean            @default(false)
+  defaultVisibility Visibility         @default(MATCHING)
+  values            CompanyStatValue[]
+  createdAt         DateTime           @default(now())
+}
+
+model StatSnapshot {
+  id          String             @id @default(cuid())
+  companyId   String
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodLabel String
+  capturedAt  DateTime           @default(now())
+  values      CompanyStatValue[]
+
+  @@unique([companyId, periodLabel])
+}
+
+model CompanyStatValue {
+  id           String         @id @default(cuid())
+  companyId    String
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  definitionId String
+  definition   StatDefinition @relation(fields: [definitionId], references: [id])
+  snapshotId   String?
+  snapshot     StatSnapshot?  @relation(fields: [snapshotId], references: [id])
+
+  valueNumber Float?
+  valueText   String?
+  valueBool   Boolean?
+  valueDate   DateTime?
+
+  visibility Visibility @default(MATCHING)
+  source     DataSource @default(MANUAL)
+  confidence Float?
+  verified   Boolean    @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, definitionId, snapshotId])
+  @@index([definitionId])
+}
+
+// ===== Điểm mạnh / yếu / nhu cầu / năng lực =====
+model CompanyAttribute {
+  id          String        @id @default(cuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type        AttributeType
+  axis        StatAxis      @default(GENERAL)
+  title       String
+  description String?
+  weight      Float         @default(1)
+  source      DataSource    @default(MANUAL)
+  confidence  Float?
+  verified    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  @@index([companyId, type])
+}
+
+// ===== Vector + Matching (chừa sẵn M2) =====
+model CompanyEmbedding {
+  id        String                     @id @default(cuid())
+  companyId String
+  company   Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  kind      EmbeddingKind              @default(PROFILE)
+  model     String                     @default("text-embedding-004")
+  embedding Unsupported("vector(768)")
+  createdAt DateTime                   @default(now())
+
+  @@unique([companyId, kind])
+}
+
+model MatchResult {
+  id              String      @id @default(cuid())
+  sourceCompanyId String
+  targetCompanyId String
+  sourceCompany   Company     @relation("MatchSource", fields: [sourceCompanyId], references: [id], onDelete: Cascade)
+  targetCompany   Company     @relation("MatchTarget", fields: [targetCompanyId], references: [id], onDelete: Cascade)
+  score           Float
+  rationale       Json?
+  status          MatchStatus @default(SUGGESTED)
+  engineVersion   String?
+  createdAt       DateTime    @default(now())
+
+  @@unique([sourceCompanyId, targetCompanyId])
+  @@index([sourceCompanyId, score])
+}
