@@ -11,7 +11,7 @@ export default [
   ...nx.configs['flat/javascript'],
   ...tseslint.configs.recommended,
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', '**/.nx/**'],
+    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', '**/.nx/**', '**/apps/web-app/**'],
   },
   {
     plugins: {
