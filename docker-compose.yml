@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: linko-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: linko
+      POSTGRES_PASSWORD: linko
+      POSTGRES_DB: linko
+    ports:
+      - '5432:5432'
+    volumes:
+      - linko_pgdata:/var/lib/postgresql/data
+volumes:
+  linko_pgdata:
