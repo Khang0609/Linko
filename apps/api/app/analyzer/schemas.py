@@ -95,8 +95,8 @@ class BusinessDraft(BaseModel):
     legal_type: str | None = None
     business_stage: str | None = None
     year_established: int | None = None
-    industry_l1: str | list[str] | None = None
-    industry_l2: str | list[str] | None = None
+    industry_l1: str | None = None
+    industry_l2: str | None = None
     employee_range: str | None = None
     revenue_range_vnd: str | None = None
     city: str | None = None
@@ -105,7 +105,7 @@ class BusinessDraft(BaseModel):
     description: str | None = None
     offers: list[OfferDraft] = Field(default_factory=list)
     needs: list[NeedDraft] = Field(default_factory=list)
-    persons: list[dict] = Field(default_factory=list)  # always [] in v0.1
+    persons: list[dict[str, Any]] = Field(default_factory=list, max_length=0)
 
 
 # ---------------------------------------------------------------------------

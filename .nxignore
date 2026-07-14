@@ -1,2 +1,0 @@
-# Ignore Next.js web-app prototype package from Nx graph to prevent build/lint failures in CI
-apps/web-app/

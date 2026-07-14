@@ -17,13 +17,16 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30
 
-    # Issue #10: Smart Analyzer & Vertex AI matching configurations
+    # Issue #10: Smart Analyzer configuration
     gemini_project: str | None = Field(default=None, validation_alias="vertex_project")
     gemini_region: str = Field(default="asia-southeast1", validation_alias="vertex_location")
     gemini_model: str = Field(default="gemini-2.5-flash-lite", validation_alias="gemini_model")
     analyzer_timeout_seconds: float = Field(default=5.0, validation_alias="analyzer_deadline_seconds")
+    analyzer_provider_timeout_seconds: float = Field(
+        default=4.25,
+        validation_alias="analyzer_provider_timeout_seconds",
+    )
     analyzer_provider: str = "mock"
-
 
     @field_validator("jwt_secret")
     @classmethod

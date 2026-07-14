@@ -57,11 +57,13 @@ class GeminiProvider(LLMProvider):
 
         try:
             from google import genai
+            from google.genai import types
 
             self._client = genai.Client(
                 vertexai=True,
                 project=self._project,
                 location=self._region,
+                http_options=types.HttpOptions(timeout=int(self._timeout * 1000)),
             )
             return self._client
         except Exception as exc:
@@ -81,8 +83,7 @@ class GeminiProvider(LLMProvider):
 
         try:
             response = await asyncio.wait_for(
-                asyncio.to_thread(
-                    client.models.generate_content,
+                client.aio.models.generate_content(
                     model=self._model,
                     contents=[user_prompt],
                     config={

@@ -375,11 +375,11 @@ export type BusinessDraft = {
   /**
    * Industry L1
    */
-  industry_l1?: string | Array<string> | null;
+  industry_l1?: string | null;
   /**
    * Industry L2
    */
-  industry_l2?: string | Array<string> | null;
+  industry_l2?: string | null;
   /**
    * Legal Type
    */
@@ -766,38 +766,6 @@ export type LogoutResponse = {
    * Message
    */
   message: string;
-};
-
-/**
- * MatchItem
- *
- * Pydantic model representing a single matched business recommendation.
- */
-export type MatchItem = {
-  /**
-   * Business Id
-   */
-  business_id: string;
-  /**
-   * Industry L1
-   */
-  industry_l1?: string | null;
-  /**
-   * Industry L2
-   */
-  industry_l2?: string | null;
-  /**
-   * Name
-   */
-  name: string;
-  /**
-   * Province
-   */
-  province?: string | null;
-  /**
-   * Score
-   */
-  score: number;
 };
 
 /**
@@ -1812,46 +1780,6 @@ export type CreatePersonApiV1BusinessesBusinessIdPersonsPostResponses = {
 
 export type CreatePersonApiV1BusinessesBusinessIdPersonsPostResponse =
   CreatePersonApiV1BusinessesBusinessIdPersonsPostResponses[keyof CreatePersonApiV1BusinessesBusinessIdPersonsPostResponses];
-
-export type ListMatchesApiV1MatchingGetData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Company Id
-     *
-     * The source business ID to find matches for
-     */
-    company_id: string;
-    /**
-     * Limit
-     */
-    limit?: number;
-  };
-  url: '/api/v1/matching';
-};
-
-export type ListMatchesApiV1MatchingGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type ListMatchesApiV1MatchingGetError =
-  ListMatchesApiV1MatchingGetErrors[keyof ListMatchesApiV1MatchingGetErrors];
-
-export type ListMatchesApiV1MatchingGetResponses = {
-  /**
-   * Response List Matches Api V1 Matching Get
-   *
-   * Successful Response
-   */
-  200: Array<MatchItem>;
-};
-
-export type ListMatchesApiV1MatchingGetResponse =
-  ListMatchesApiV1MatchingGetResponses[keyof ListMatchesApiV1MatchingGetResponses];
 
 export type DeleteNeedApiV1NeedsNeedIdDeleteData = {
   body?: never;

@@ -155,20 +155,6 @@ export const zLogoutResponse = z.object({
 });
 
 /**
- * MatchItem
- *
- * Pydantic model representing a single matched business recommendation.
- */
-export const zMatchItem = z.object({
-  business_id: z.uuid(),
-  industry_l1: z.string().nullish(),
-  industry_l2: z.string().nullish(),
-  name: z.string(),
-  province: z.string().nullish(),
-  score: z.number(),
-});
-
-/**
  * NeedCreate
  */
 export const zNeedCreate = z.object({
@@ -307,13 +293,13 @@ export const zBusinessDraft = z.object({
   description: z.string().nullish(),
   employee_range: z.string().nullish(),
   geo_operating: z.array(z.string()).optional(),
-  industry_l1: z.union([z.string(), z.array(z.string())]).nullish(),
-  industry_l2: z.union([z.string(), z.array(z.string())]).nullish(),
+  industry_l1: z.string().nullish(),
+  industry_l2: z.string().nullish(),
   legal_type: z.string().nullish(),
   name: z.string().nullish(),
   needs: z.array(zNeedDraft).optional(),
   offers: z.array(zOfferDraft).optional(),
-  persons: z.array(z.record(z.string(), z.unknown())).optional(),
+  persons: z.array(z.record(z.string(), z.unknown())).max(0).optional(),
   province: z.string().nullish(),
   revenue_range_vnd: z.string().nullish(),
   tax_id: z.string().nullish(),
@@ -777,18 +763,6 @@ export const zCreatePersonApiV1BusinessesBusinessIdPersonsPostPath = z.object({
  * Successful Response
  */
 export const zCreatePersonApiV1BusinessesBusinessIdPersonsPostResponse = zPersonResponse;
-
-export const zListMatchesApiV1MatchingGetQuery = z.object({
-  company_id: z.uuid(),
-  limit: z.int().gte(1).lte(50).optional().default(5),
-});
-
-/**
- * Response List Matches Api V1 Matching Get
- *
- * Successful Response
- */
-export const zListMatchesApiV1MatchingGetResponse = z.array(zMatchItem);
 
 export const zDeleteNeedApiV1NeedsNeedIdDeletePath = z.object({
   need_id: z.uuid(),

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.analyzer.eval.loader import load_golden_set
 from app.analyzer.eval.score import compute_metrics, score_case
-from app.analyzer.mapping import load_industry_catalog
+from app.analyzer.mapping import build_industry_catalog
 from app.analyzer.providers.gemini import GeminiProvider
 from app.analyzer.providers.mock import MockProvider
 from app.analyzer.schemas import AnalyzeRequest
@@ -85,7 +85,7 @@ async def run_evaluation(
     try:
         print("Fetching reference catalogs from database...")
         ind_cat, int_cat, ind_rows = _fetch_db_catalogs()
-        load_industry_catalog(ind_rows)
+        industry_catalog = build_industry_catalog(ind_rows)
         print("Reference data loaded successfully.")
     except Exception as exc:
         print(f"Error connecting to database or loading catalogs: {exc}", file=sys.stderr)
@@ -108,7 +108,7 @@ async def run_evaluation(
                 "is_active": True,
             },
         ]
-        load_industry_catalog(ind_rows)
+        industry_catalog = build_industry_catalog(ind_rows)
 
     # 2. Select Provider
     if provider_name == "gemini":
@@ -117,7 +117,7 @@ async def run_evaluation(
             project=settings.gemini_project,
             region=settings.gemini_region,
             model=settings.gemini_model,
-            timeout=settings.analyzer_timeout_seconds,
+            timeout=settings.analyzer_provider_timeout_seconds,
             industry_catalog=ind_cat,
             intent_catalog=int_cat,
         )
@@ -158,7 +158,12 @@ async def run_evaluation(
 
         try:
             # Run pipeline
-            res = await run_analysis(req, provider, timeout=settings.analyzer_timeout_seconds)
+            res = await run_analysis(
+                req,
+                provider,
+                industry_catalog=industry_catalog,
+                timeout=settings.analyzer_timeout_seconds,
+            )
 
             if res.status == "fallback":
                 print(f"COMPLETED WITH FALLBACK (Warnings: {res.warnings})")

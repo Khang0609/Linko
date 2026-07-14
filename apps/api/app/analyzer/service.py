@@ -21,7 +21,7 @@ from app.analyzer.ingest.base import IngestResult
 from app.analyzer.ingest.pdf import ingest_pdf
 from app.analyzer.ingest.text import ingest_text
 from app.analyzer.ingest.url import SSRFError, ingest_url
-from app.analyzer.mapping import post_validate
+from app.analyzer.mapping import IndustryCatalog, post_validate
 from app.analyzer.prompt import PROMPT_VERSION
 from app.analyzer.providers.base import LLMProvider
 from app.analyzer.schemas import (
@@ -49,8 +49,13 @@ def _parse_llm_output(raw: dict[str, Any]) -> tuple[BusinessDraft, dict[str, flo
     offers = [OfferDraft(**o) for o in offers_raw] if isinstance(offers_raw, list) else []
     needs = [NeedDraft(**n) for n in needs_raw] if isinstance(needs_raw, list) else []
 
+    draft_values = {k: v for k, v in raw.items() if k in BusinessDraft.model_fields}
+    for field in ("industry_l1", "industry_l2"):
+        if draft_values.get(field) is not None and not isinstance(draft_values[field], str):
+            draft_values[field] = None
+
     draft = BusinessDraft(
-        **{k: v for k, v in raw.items() if k in BusinessDraft.model_fields},
+        **draft_values,
         offers=offers,
         needs=needs,
         persons=[],
@@ -77,6 +82,7 @@ async def run_analysis(
     request: AnalyzeRequest,
     provider: LLMProvider,
     *,
+    industry_catalog: IndustryCatalog,
     timeout: float = 5.0,
 ) -> AnalyzeResponse:
     """Execute the full analyzer pipeline with timeout enforcement.
@@ -94,7 +100,7 @@ async def run_analysis(
 
     try:
         result = await asyncio.wait_for(
-            _pipeline(request, provider, request_id),
+            _pipeline(request, provider, request_id, industry_catalog),
             timeout=timeout,
         )
     except TimeoutError:
@@ -135,6 +141,7 @@ async def _pipeline(
     request: AnalyzeRequest,
     provider: LLMProvider,
     request_id: str,
+    industry_catalog: IndustryCatalog,
 ) -> AnalyzeResponse:
     """Inner pipeline: ingest → extract → map → respond."""
     # 1. Ingest
@@ -170,7 +177,11 @@ async def _pipeline(
         return fallback_response(*all_warnings)
 
     # 4. Post-validate (mapping.py)
-    draft, field_meta, validation_warnings = post_validate(draft, field_confidence)
+    draft, field_meta, validation_warnings = post_validate(
+        draft,
+        industry_catalog=industry_catalog,
+        raw_confidence=field_confidence,
+    )
     all_warnings.extend(validation_warnings)
 
     return AnalyzeResponse(

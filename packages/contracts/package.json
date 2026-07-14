@@ -15,8 +15,8 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint . --no-error-on-unmatched-pattern",
     "test": "vitest run && pnpm run check:openapi",
-    "export:openapi": "node scripts/export-openapi.js",
-    "check:openapi": "node scripts/export-openapi.js --check",
+    "export:openapi": "cd ../../apps/api && uv run python scripts/export_openapi.py --output ../../packages/contracts/openapi.json",
+    "check:openapi": "cd ../../apps/api && uv run python scripts/export_openapi.py --output ../../packages/contracts/openapi.json --check",
     "generate": "pnpm run export:openapi && openapi-ts"
   },
   "dependencies": {

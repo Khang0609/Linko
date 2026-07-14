@@ -1,24 +1,24 @@
-"""API router for Smart Business Analyzer — Issue #10.
-
-POST /api/v1/analyze
-Bearer authenticated.
-Fetches active reference data from DB to dynamically populate prompt enums
-and mapping validation catalogs.
-"""
+"""Authenticated API route for the Smart Business Analyzer."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.analyzer.mapping import load_industry_catalog
+from app.analyzer.mapping import (
+    IndustryCatalog,
+    build_industry_catalog,
+)
 from app.analyzer.providers.gemini import GeminiProvider
 from app.analyzer.providers.mock import MockProvider
-from app.analyzer.schemas import AnalyzeRequest, AnalyzeResponse
+from app.analyzer.schemas import AnalyzeRequest, AnalyzeResponse, fallback_response
 from app.analyzer.service import run_analysis
 from app.config import settings
 from app.database import get_db
@@ -26,57 +26,80 @@ from app.models import Industry, IntentType
 from app.security import get_current_account
 
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 
-async def _fetch_reference_data(session: AsyncSession) -> tuple[str, str, list[dict]]:
-    """Fetch active industries and intent types to populate prompt and validation catalog.
+@dataclass(frozen=True)
+class ReferenceCatalog:
+    industry_prompt: str
+    intent_prompt: str
+    industries: IndustryCatalog
 
-    Returns:
-        (industry_catalog_text, intent_catalog_text, industry_rows)
-    """
-    # 1. Fetch industries
+
+_reference_catalog: ReferenceCatalog | None = None
+_reference_catalog_lock = asyncio.Lock()
+
+
+async def _fetch_reference_data(session: AsyncSession) -> ReferenceCatalog:
+    """Fetch active reference rows and build an immutable catalog snapshot."""
     ind_stmt = select(Industry).where(Industry.is_active.is_(True))
     industries = (await session.execute(ind_stmt)).scalars().all()
 
-    # Build catalog text for prompt and list for mapping.py validation
-    industry_rows = []
-    l1_lines = []
+    industry_rows: list[dict[str, Any]] = []
+    l1_names: dict[str, str] = {}
     l2_by_parent: dict[str, list[str]] = {}
+    for industry in industries:
+        industry_rows.append(
+            {
+                "code": industry.code,
+                "level": industry.level,
+                "parent_code": industry.parent_code,
+                "is_active": industry.is_active,
+            }
+        )
+        if industry.level == 1:
+            l1_names[industry.code] = industry.name_vi
+        elif industry.level == 2 and industry.parent_code:
+            l2_by_parent.setdefault(industry.parent_code, []).append(
+                f"  * {industry.code}: {industry.name_vi}"
+            )
 
-    for ind in industries:
-        industry_rows.append({
-            "code": ind.code,
-            "level": ind.level,
-            "parent_code": ind.parent_code,
-            "is_active": ind.is_active,
-        })
-        if ind.level == 1:
-            l1_lines.append(f"- {ind.code}: {ind.name_vi}")
-        elif ind.level == 2 and ind.parent_code:
-            l2_by_parent.setdefault(ind.parent_code, []).append(f"  * {ind.code}: {ind.name_vi}")
+    industry_lines: list[str] = []
+    for code in sorted(l1_names):
+        industry_lines.append(f"- {code}: {l1_names[code]}")
+        industry_lines.extend(sorted(l2_by_parent.get(code, [])))
 
-    ind_lines = []
-    for l1 in sorted(l1_lines):
-        ind_lines.append(l1)
-        code = l1.split(":")[0].replace("- ", "").strip()
-        if code in l2_by_parent:
-            ind_lines.extend(sorted(l2_by_parent[code]))
+    intent_stmt = select(IntentType).where(IntentType.is_active.is_(True))
+    intents = (await session.execute(intent_stmt)).scalars().all()
+    intent_lines = sorted(
+        f"- {intent.code}: {intent.name_vi} ({intent.match_kind})"
+        for intent in intents
+    )
 
-    industry_catalog_text = "\n".join(ind_lines)
+    return ReferenceCatalog(
+        industry_prompt="\n".join(industry_lines),
+        intent_prompt="\n".join(intent_lines),
+        industries=MappingProxyType(build_industry_catalog(industry_rows)),
+    )
 
-    # 2. Fetch intent types
-    int_stmt = select(IntentType).where(IntentType.is_active.is_(True))
-    intents = (await session.execute(int_stmt)).scalars().all()
 
-    intent_lines = []
-    for intent in intents:
-        intent_lines.append(f"- {intent.code}: {intent.name_vi} ({intent.match_kind})")
+async def _get_reference_data(session: AsyncSession) -> ReferenceCatalog:
+    """Load reference data once, then reuse the immutable snapshot."""
+    global _reference_catalog
 
-    intent_catalog_text = "\n".join(sorted(intent_lines))
+    if _reference_catalog is not None:
+        return _reference_catalog
 
-    return industry_catalog_text, intent_catalog_text, industry_rows
+    async with _reference_catalog_lock:
+        if _reference_catalog is None:
+            _reference_catalog = await _fetch_reference_data(session)
+        return _reference_catalog
+
+
+def clear_reference_cache() -> None:
+    """Clear the catalog snapshot for tests or an explicit refresh."""
+    global _reference_catalog
+    _reference_catalog = None
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -85,30 +108,37 @@ async def analyze_business(
     account: Annotated[Any, Depends(get_current_account)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> AnalyzeResponse:
-    """Analyze unstructured business info to extract structured data draft.
+    """Analyze unstructured business information within one end-to-end deadline."""
+    del account
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + settings.analyzer_timeout_seconds
 
-    Requires Bearer Auth.
-    Enforces a strict response time budget using the service orchestrator.
-    """
-    # Fetch active catalogs from db
-    industry_catalog, intent_catalog, industry_rows = await _fetch_reference_data(session)
+    try:
+        async with asyncio.timeout_at(deadline):
+            reference = await _get_reference_data(session)
+            remaining = max(0.001, deadline - loop.time())
 
-    # Load mapping catalog into the validator module cache
-    load_industry_catalog(industry_rows)
+            if settings.analyzer_provider == "gemini":
+                provider = GeminiProvider(
+                    project=settings.gemini_project,
+                    region=settings.gemini_region,
+                    model=settings.gemini_model,
+                    timeout=min(settings.analyzer_provider_timeout_seconds, remaining),
+                    industry_catalog=reference.industry_prompt,
+                    intent_catalog=reference.intent_prompt,
+                )
+            else:
+                provider = MockProvider()
 
-    # Select provider based on config
-    if settings.analyzer_provider == "gemini":
-        provider = GeminiProvider(
-            project=settings.gemini_project,
-            region=settings.gemini_region,
-            model=settings.gemini_model,
-            timeout=settings.analyzer_timeout_seconds,
-            industry_catalog=industry_catalog,
-            intent_catalog=intent_catalog,
-        )
-    else:
-        provider = MockProvider()
-
-    # Orchestrate the pipeline
-    response = await run_analysis(request, provider, timeout=settings.analyzer_timeout_seconds)
-    return response
+            return await run_analysis(
+                request,
+                provider,
+                industry_catalog=reference.industries,
+                timeout=remaining,
+            )
+    except TimeoutError:
+        logger.warning("analyzer.endpoint_timeout source_type=%s", request.source_type)
+        return fallback_response("TIMEOUT")
+    except Exception:
+        logger.exception("analyzer.reference_data_error source_type=%s", request.source_type)
+        return fallback_response("REFERENCE_DATA_ERROR")

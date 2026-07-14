@@ -711,12 +711,6 @@
                 "type": "string"
               },
               {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -726,12 +720,6 @@
             "anyOf": [
               {
                 "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
               },
               {
                 "type": "null"
@@ -780,6 +768,7 @@
               "additionalProperties": true,
               "type": "object"
             },
+            "maxItems": 0,
             "title": "Persons",
             "type": "array"
           },
@@ -1473,64 +1462,6 @@
           "message"
         ],
         "title": "LogoutResponse",
-        "type": "object"
-      },
-      "MatchItem": {
-        "description": "Pydantic model representing a single matched business recommendation.",
-        "properties": {
-          "business_id": {
-            "format": "uuid",
-            "title": "Business Id",
-            "type": "string"
-          },
-          "industry_l1": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Industry L1"
-          },
-          "industry_l2": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Industry L2"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "province": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Province"
-          },
-          "score": {
-            "title": "Score",
-            "type": "number"
-          }
-        },
-        "required": [
-          "business_id",
-          "name",
-          "score"
-        ],
-        "title": "MatchItem",
         "type": "object"
       },
       "NeedCreate": {
@@ -2638,7 +2569,7 @@
   "paths": {
     "/api/v1/analyze": {
       "post": {
-        "description": "Analyze unstructured business info to extract structured data draft.\n\nRequires Bearer Auth.\nEnforces a strict response time budget using the service orchestrator.",
+        "description": "Analyze unstructured business information within one end-to-end deadline.",
         "operationId": "analyze_business_api_v1_analyze_post",
         "requestBody": {
           "content": {
@@ -3329,73 +3260,6 @@
         "summary": "Create Person",
         "tags": [
           "persons"
-        ]
-      }
-    },
-    "/api/v1/matching": {
-      "get": {
-        "description": "Find top N matching businesses for a company.\n\nRequires Bearer Auth. Checks that requesting account has access to the\nsource company.",
-        "operationId": "list_matches_api_v1_matching_get",
-        "parameters": [
-          {
-            "description": "The source business ID to find matches for",
-            "in": "query",
-            "name": "company_id",
-            "required": true,
-            "schema": {
-              "description": "The source business ID to find matches for",
-              "format": "uuid",
-              "title": "Company Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 5,
-              "maximum": 50,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/MatchItem"
-                  },
-                  "title": "Response List Matches Api V1 Matching Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "summary": "List Matches",
-        "tags": [
-          "matching"
         ]
       }
     },
