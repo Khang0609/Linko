@@ -91,17 +91,19 @@ def _validate_intent_items(
     items: list[OfferDraft] | list[NeedDraft],
     catalog: IndustryCatalog,
 ) -> tuple[list[OfferDraft] | list[NeedDraft], bool]:
-    """Null unknown item enums while preserving the extracted item."""
+    """Keep only valid intents and null invalid category values without substitution."""
     needs_review = False
+    valid_items: list[OfferDraft | NeedDraft] = []
     for item in items:
-        if item.intent_type and item.intent_type not in _INTENT_TYPES:
-            item.intent_type = None
+        if not item.intent_type or item.intent_type not in _INTENT_TYPES:
             needs_review = True
+            continue
 
         if item.category_l1:
             l1_entry = catalog.get(item.category_l1)
             if not l1_entry or l1_entry[0] != 1 or not l1_entry[2]:
                 item.category_l1 = None
+                item.category_l2 = None
                 needs_review = True
 
         if item.category_l2:
@@ -112,7 +114,9 @@ def _validate_intent_items(
                 item.category_l2 = None
                 needs_review = True
 
-    return items, needs_review
+        valid_items.append(item)
+
+    return valid_items, needs_review
 
 
 def post_validate(

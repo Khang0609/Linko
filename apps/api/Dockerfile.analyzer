@@ -22,6 +22,12 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY . .
 RUN uv sync --frozen --no-dev
 
+RUN groupadd --system linko \
+    && useradd --system --gid linko --home-dir /app --no-create-home linko \
+    && chown -R linko:linko /app
+
+USER linko
+
 EXPOSE 8080
 
 # Run migrations and launch API server with the analyzer router loaded

@@ -12,12 +12,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.analyzer.dependencies import get_analyzer_provider, get_payload_resolver
 from app.analyzer.mapping import (
     IndustryCatalog,
     build_industry_catalog,
 )
-from app.analyzer.providers.gemini import GeminiProvider
-from app.analyzer.providers.mock import MockProvider
+from app.analyzer.payloads import PayloadResolver
+from app.analyzer.providers.base import LLMProvider
 from app.analyzer.schemas import AnalyzeRequest, AnalyzeResponse, fallback_response
 from app.analyzer.service import run_analysis
 from app.config import settings
@@ -107,33 +108,32 @@ async def analyze_business(
     request: AnalyzeRequest,
     account: Annotated[Any, Depends(get_current_account)],
     session: Annotated[AsyncSession, Depends(get_db)],
+    provider: Annotated[LLMProvider, Depends(get_analyzer_provider)],
+    payload_resolver: Annotated[PayloadResolver, Depends(get_payload_resolver)],
 ) -> AnalyzeResponse:
     """Analyze unstructured business information within one end-to-end deadline."""
-    del account
     loop = asyncio.get_running_loop()
     deadline = loop.time() + settings.analyzer_timeout_seconds
+
+    if not provider.available:
+        return fallback_response("PROVIDER_NOT_CONFIGURED")
 
     try:
         async with asyncio.timeout_at(deadline):
             reference = await _get_reference_data(session)
             remaining = max(0.001, deadline - loop.time())
-
-            if settings.analyzer_provider == "gemini":
-                provider = GeminiProvider(
-                    project=settings.gemini_project,
-                    region=settings.gemini_region,
-                    model=settings.gemini_model,
-                    timeout=min(settings.analyzer_provider_timeout_seconds, remaining),
-                    industry_catalog=reference.industry_prompt,
-                    intent_catalog=reference.intent_prompt,
-                )
-            else:
-                provider = MockProvider()
+            provider.configure_context(
+                industry_catalog=reference.industry_prompt,
+                intent_catalog=reference.intent_prompt,
+                timeout=min(settings.analyzer_provider_timeout_seconds, remaining),
+            )
 
             return await run_analysis(
                 request,
                 provider,
                 industry_catalog=reference.industries,
+                payload_resolver=payload_resolver,
+                account_id=account.id,
                 timeout=remaining,
             )
     except TimeoutError:

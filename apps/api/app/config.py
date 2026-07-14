@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -26,7 +28,12 @@ class Settings(BaseSettings):
         default=4.25,
         validation_alias="analyzer_provider_timeout_seconds",
     )
-    analyzer_provider: str = "mock"
+    analyzer_provider: Literal["gemini", "disabled"] = "disabled"
+    analyzer_pdf_max_concurrency: int = Field(
+        default=2,
+        ge=1,
+        validation_alias="analyzer_pdf_max_concurrency",
+    )
 
     @field_validator("jwt_secret")
     @classmethod

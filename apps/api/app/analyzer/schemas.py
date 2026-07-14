@@ -8,7 +8,9 @@ FieldMeta       → per-field confidence + needs_review flag
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from pathlib import PurePosixPath, PureWindowsPath
+from typing import Annotated, Any, Literal
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, model_validator
 from pydantic_core import PydanticCustomError
@@ -44,6 +46,20 @@ class AnalyzeRequest(BaseModel):
                 raise PydanticCustomError(
                     "missing_payload_ref",
                     f"source_type='{self.source_type}' requires payload_ref.",
+                )
+        if self.source_type in ("text", "pdf") and self.payload_ref:
+            ref = self.payload_ref.strip()
+            normalized = ref.replace("\\", "/")
+            parsed = urlparse(ref)
+            if (
+                parsed.scheme
+                or PurePosixPath(normalized).is_absolute()
+                or PureWindowsPath(ref).is_absolute()
+                or ".." in PurePosixPath(normalized).parts
+            ):
+                raise PydanticCustomError(
+                    "unsafe_payload_ref",
+                    "payload_ref must be an opaque claim-check reference, not a path or URL.",
                 )
         return self
 
@@ -106,6 +122,15 @@ class BusinessDraft(BaseModel):
     offers: list[OfferDraft] = Field(default_factory=list)
     needs: list[NeedDraft] = Field(default_factory=list)
     persons: list[dict[str, Any]] = Field(default_factory=list, max_length=0)
+
+
+ConfidenceValue = Annotated[float, Field(ge=0, le=1)]
+
+
+class ExtractionPayload(BusinessDraft):
+    """Strict raw model output schema used by Gemini structured output."""
+
+    field_confidence: dict[str, ConfidenceValue] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------

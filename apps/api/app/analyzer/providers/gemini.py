@@ -12,12 +12,12 @@ Config:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from typing import Any
 
 from app.analyzer.prompt import build_system_prompt, build_user_prompt
-from app.analyzer.providers.base import LLMProvider
+from app.analyzer.providers.base import LLMParseError, LLMProvider, ProviderUnavailableError
+from app.analyzer.schemas import ExtractionPayload
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,10 @@ class GeminiProvider(LLMProvider):
         if self._client is not None:
             return self._client
         if self._init_error is not None:
-            raise RuntimeError(self._init_error)
+            raise ProviderUnavailableError("Gemini provider initialization failed")
+
+        if not self._project:
+            raise ProviderUnavailableError("Vertex project is not configured")
 
         try:
             from google import genai
@@ -69,7 +72,18 @@ class GeminiProvider(LLMProvider):
         except Exception as exc:
             self._init_error = f"Gemini init failed: {exc}"
             logger.error(self._init_error)
-            raise RuntimeError(self._init_error) from exc
+            raise ProviderUnavailableError("Gemini provider initialization failed") from exc
+
+    def configure_context(
+        self,
+        *,
+        industry_catalog: str,
+        intent_catalog: str,
+        timeout: float,
+    ) -> None:
+        self._industry_catalog = industry_catalog
+        self._intent_catalog = intent_catalog
+        self._timeout = min(self._timeout, timeout)
 
     async def extract(self, text: str) -> dict[str, Any]:
         """Call Gemini to extract structured business data."""
@@ -81,33 +95,47 @@ class GeminiProvider(LLMProvider):
         )
         user_prompt = build_user_prompt(text)
 
+        from google.genai import types
+
+        config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            response_mime_type="application/json",
+            response_schema=ExtractionPayload,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+        )
+
         try:
             response = await asyncio.wait_for(
                 client.aio.models.generate_content(
                     model=self._model,
                     contents=[user_prompt],
-                    config={
-                        "system_instruction": system_prompt,
-                        "response_mime_type": "application/json",
-                        "thinking_config": {"thinking_budget": 0},
-                    },
+                    config=config,
                 ),
                 timeout=self._timeout,
             )
         except TimeoutError:
             raise
+        except ProviderUnavailableError:
+            raise
         except Exception as exc:
             logger.error("Gemini API call failed: %s", exc)
-            raise
+            raise ProviderUnavailableError("Gemini provider request failed") from exc
 
-        if not response.text:
-            raise ValueError("Gemini returned empty response")
+        try:
+            parsed = getattr(response, "parsed", None)
+            if isinstance(parsed, ExtractionPayload):
+                payload = parsed
+            elif parsed is not None:
+                payload = ExtractionPayload.model_validate(parsed)
+            else:
+                if not response.text:
+                    raise ValueError("Gemini returned empty response")
+                raw_text = response.text.strip()
+                if raw_text.startswith("```"):
+                    lines = raw_text.split("\n")
+                    raw_text = "\n".join(lines[1:-1]) if len(lines) > 2 else raw_text
+                payload = ExtractionPayload.model_validate_json(raw_text)
+        except Exception as exc:
+            raise LLMParseError("Gemini output did not match ExtractionPayload") from exc
 
-        # Parse and return the JSON
-        raw_text = response.text.strip()
-        # Handle markdown code fences if present
-        if raw_text.startswith("```"):
-            lines = raw_text.split("\n")
-            raw_text = "\n".join(lines[1:-1]) if len(lines) > 2 else raw_text
-
-        return json.loads(raw_text)
+        return payload.model_dump()

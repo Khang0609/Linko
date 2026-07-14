@@ -7,42 +7,78 @@ Limits: max 10 MB, max 50 pages.
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from pathlib import Path
+from contextlib import suppress
+from weakref import WeakKeyDictionary
 
 import pymupdf  # PyMuPDF
 
 from app.analyzer.ingest.base import IngestResult
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 MAX_PDF_BYTES = 10 * 1024 * 1024  # 10 MB
 MAX_PAGES = 50
 MAX_TEXT_CHARS = 20_000
+_pdf_semaphores: WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = (
+    WeakKeyDictionary()
+)
+_background_pdf_jobs: set[asyncio.Task[IngestResult]] = set()
 
 
-def ingest_pdf(file_path: str) -> IngestResult:
-    """Extract text from a born-digital PDF file.
+def _pdf_semaphore() -> asyncio.Semaphore:
+    loop = asyncio.get_running_loop()
+    semaphore = _pdf_semaphores.get(loop)
+    if semaphore is None:
+        semaphore = asyncio.Semaphore(settings.analyzer_pdf_max_concurrency)
+        _pdf_semaphores[loop] = semaphore
+    return semaphore
+
+
+def _finish_background_job(task: asyncio.Task[IngestResult]) -> None:
+    _background_pdf_jobs.discard(task)
+    if not task.cancelled():
+        with suppress(Exception):
+            task.exception()
+
+
+async def ingest_pdf_bytes_async(
+    data: bytes,
+    *,
+    semaphore: asyncio.Semaphore | None = None,
+) -> IngestResult:
+    """Extract PDF text off the event loop with bounded concurrency."""
+
+    async def run() -> IngestResult:
+        limiter = semaphore or _pdf_semaphore()
+        async with limiter:
+            return await asyncio.to_thread(ingest_pdf_bytes, data)
+
+    task = asyncio.create_task(run())
+    _background_pdf_jobs.add(task)
+    task.add_done_callback(_finish_background_job)
+    return await asyncio.shield(task)
+
+
+def ingest_pdf_bytes(data: bytes) -> IngestResult:
+    """Extract text from born-digital PDF bytes.
 
     Args:
-        file_path: Absolute path to the PDF file on disk.
+        data: PDF content returned by a trusted payload resolver.
 
     Returns:
         IngestResult with extracted text or appropriate warnings.
     """
     warnings: list[str] = []
-    path = Path(file_path)
-
-    if not path.is_file():
-        return IngestResult(text="", source_type="pdf", warnings=["PDF_FILE_NOT_FOUND"])
-
-    file_size = path.stat().st_size
+    file_size = len(data)
     if file_size > MAX_PDF_BYTES:
         warnings.append(f"PDF_TOO_LARGE:{file_size}>{MAX_PDF_BYTES}")
         return IngestResult(text="", source_type="pdf", warnings=warnings)
 
     try:
-        doc = pymupdf.open(str(path))
+        doc = pymupdf.open(stream=data, filetype="pdf")
     except Exception:
         logger.exception("Failed to open PDF")
         return IngestResult(text="", source_type="pdf", warnings=["PDF_OPEN_ERROR"])

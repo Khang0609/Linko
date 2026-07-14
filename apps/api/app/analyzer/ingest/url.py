@@ -93,6 +93,8 @@ def _check_url(url: str) -> tuple[str, int]:
         port = parsed.port or (443 if parsed.scheme == "https" else 80)
     except ValueError as exc:
         raise SSRFError("Invalid URL port") from exc
+    if port not in (80, 443):
+        raise SSRFError(f"Blocked URL port: {port}")
     return parsed.hostname, port
 
 

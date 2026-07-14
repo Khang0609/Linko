@@ -7,12 +7,9 @@ from app.analyzer.ingest.base import IngestResult
 MAX_TEXT_CHARS = 20_000
 
 
-def ingest_text(*, inline_text: str | None = None, payload_ref: str | None = None) -> IngestResult:
-    """Ingest from inline text or a payload reference (future: S3/GCS key).
-
-    For v0.1, payload_ref is treated as raw text content directly.
-    """
-    raw = (inline_text or payload_ref or "").strip()
+def ingest_text(*, inline_text: str | None = None) -> IngestResult:
+    """Normalize inline text after any external reference has been resolved."""
+    raw = (inline_text or "").strip()
     warnings: list[str] = []
 
     if not raw:

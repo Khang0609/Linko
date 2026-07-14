@@ -16,20 +16,21 @@ import logging
 import time
 import uuid
 from typing import Any
+from uuid import UUID
 
 from app.analyzer.ingest.base import IngestResult
-from app.analyzer.ingest.pdf import ingest_pdf
+from app.analyzer.ingest.pdf import ingest_pdf_bytes_async
 from app.analyzer.ingest.text import ingest_text
 from app.analyzer.ingest.url import SSRFError, ingest_url
 from app.analyzer.mapping import IndustryCatalog, post_validate
+from app.analyzer.payloads import PayloadRefUnavailableError, PayloadResolver
 from app.analyzer.prompt import PROMPT_VERSION
-from app.analyzer.providers.base import LLMProvider
+from app.analyzer.providers.base import LLMParseError, LLMProvider, ProviderUnavailableError
 from app.analyzer.schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
     BusinessDraft,
-    NeedDraft,
-    OfferDraft,
+    ExtractionPayload,
     fallback_response,
 )
 
@@ -38,42 +39,35 @@ logger = logging.getLogger(__name__)
 
 def _parse_llm_output(raw: dict[str, Any]) -> tuple[BusinessDraft, dict[str, float]]:
     """Parse the raw LLM JSON output into a BusinessDraft + confidence dict."""
-    # Extract field_confidence before constructing the draft
-    field_confidence: dict[str, float] = raw.pop("field_confidence", {})
-
-    # Parse offers and needs into draft objects
-    offers_raw = raw.pop("offers", [])
-    needs_raw = raw.pop("needs", [])
-    raw.pop("persons", None)  # always []
-
-    offers = [OfferDraft(**o) for o in offers_raw] if isinstance(offers_raw, list) else []
-    needs = [NeedDraft(**n) for n in needs_raw] if isinstance(needs_raw, list) else []
-
-    draft_values = {k: v for k, v in raw.items() if k in BusinessDraft.model_fields}
-    for field in ("industry_l1", "industry_l2"):
-        if draft_values.get(field) is not None and not isinstance(draft_values[field], str):
-            draft_values[field] = None
-
-    draft = BusinessDraft(
-        **draft_values,
-        offers=offers,
-        needs=needs,
-        persons=[],
+    payload = ExtractionPayload.model_validate(raw)
+    draft = BusinessDraft.model_validate(
+        payload.model_dump(exclude={"field_confidence"})
     )
-    return draft, field_confidence
+    return draft, dict(payload.field_confidence)
 
 
-async def _run_ingest(request: AnalyzeRequest) -> IngestResult:
+async def _run_ingest(
+    request: AnalyzeRequest,
+    payload_resolver: PayloadResolver,
+    account_id: UUID,
+) -> IngestResult:
     """Route to the correct ingest handler based on source_type."""
     if request.source_type == "text":
-        return ingest_text(
-            inline_text=request.inline_text,
-            payload_ref=request.payload_ref,
+        if request.inline_text is not None:
+            return ingest_text(inline_text=request.inline_text)
+        resolved_text = await payload_resolver.resolve_text(
+            request.payload_ref or "",
+            account_id,
         )
+        return ingest_text(inline_text=resolved_text)
     elif request.source_type == "url":
         return await ingest_url(request.payload_ref or "")
     elif request.source_type == "pdf":
-        return ingest_pdf(request.payload_ref or "")
+        pdf_bytes = await payload_resolver.resolve_pdf(
+            request.payload_ref or "",
+            account_id,
+        )
+        return await ingest_pdf_bytes_async(pdf_bytes)
     else:
         return IngestResult(text="", source_type=request.source_type, warnings=["UNKNOWN_SOURCE_TYPE"])
 
@@ -83,6 +77,8 @@ async def run_analysis(
     provider: LLMProvider,
     *,
     industry_catalog: IndustryCatalog,
+    payload_resolver: PayloadResolver,
+    account_id: UUID,
     timeout: float = 5.0,
 ) -> AnalyzeResponse:
     """Execute the full analyzer pipeline with timeout enforcement.
@@ -100,7 +96,14 @@ async def run_analysis(
 
     try:
         result = await asyncio.wait_for(
-            _pipeline(request, provider, request_id, industry_catalog),
+            _pipeline(
+                request,
+                provider,
+                request_id,
+                industry_catalog,
+                payload_resolver,
+                account_id,
+            ),
             timeout=timeout,
         )
     except TimeoutError:
@@ -115,6 +118,8 @@ async def run_analysis(
     except SSRFError as exc:
         logger.warning("analyzer.ssrf request_id=%s detail=%s", request_id, exc)
         return fallback_response("SSRF_BLOCKED")
+    except PayloadRefUnavailableError:
+        return fallback_response("PAYLOAD_REF_UNAVAILABLE")
     except Exception:
         latency_ms = (time.monotonic() - start) * 1000
         logger.exception(
@@ -142,10 +147,12 @@ async def _pipeline(
     provider: LLMProvider,
     request_id: str,
     industry_catalog: IndustryCatalog,
+    payload_resolver: PayloadResolver,
+    account_id: UUID,
 ) -> AnalyzeResponse:
     """Inner pipeline: ingest → extract → map → respond."""
     # 1. Ingest
-    ingest_result = await _run_ingest(request)
+    ingest_result = await _run_ingest(request, payload_resolver, account_id)
     all_warnings = list(ingest_result.warnings)
 
     if ingest_result.is_empty:
@@ -159,6 +166,12 @@ async def _pipeline(
     # 2. Extract via LLM
     try:
         raw_output = await provider.extract(ingest_result.text)
+    except LLMParseError:
+        all_warnings.append("LLM_PARSE_ERROR")
+        return fallback_response(*all_warnings)
+    except ProviderUnavailableError:
+        all_warnings.append("PROVIDER_UNAVAILABLE")
+        return fallback_response(*all_warnings)
     except json.JSONDecodeError:
         all_warnings.append("LLM_INVALID_JSON")
         return fallback_response(*all_warnings)

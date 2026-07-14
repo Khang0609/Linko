@@ -15,13 +15,15 @@ import asyncio
 import ipaddress
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import httpcore
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.analyzer.ingest.pdf import ingest_pdf
+from app.analyzer.dependencies import get_analyzer_provider
+from app.analyzer.ingest.pdf import ingest_pdf_bytes
 from app.analyzer.ingest.text import ingest_text
 from app.analyzer.ingest.url import (
     MAX_BODY_BYTES,
@@ -33,6 +35,7 @@ from app.analyzer.ingest.url import (
     ingest_url,
 )
 from app.analyzer.mapping import build_industry_catalog, post_validate
+from app.analyzer.payloads import DisabledPayloadResolver
 from app.analyzer.providers.gemini import GeminiProvider
 from app.analyzer.providers.mock import InvalidJsonMockProvider, MockProvider, TimeoutMockProvider
 from app.analyzer.router import ReferenceCatalog, _get_reference_data, clear_reference_cache
@@ -42,6 +45,8 @@ from app.config import settings
 from app.main import app
 from app.models import Account
 from app.security import get_current_account
+
+_ACCOUNT_ID = UUID(int=0)
 
 
 def _industry_catalog():
@@ -272,12 +277,10 @@ def test_pdf_ingest_born_digital(mock_open) -> None:
     mock_doc.__getitem__.return_value = mock_page1
     mock_open.return_value = mock_doc
 
-    with patch("pathlib.Path.is_file", return_value=True), \
-         patch("pathlib.Path.stat") as mock_stat:
-        mock_stat.return_value.st_size = 1000
-        res = ingest_pdf("test.pdf")
-        assert res.text == "Business Name: ABC"
-        assert not res.warnings
+    res = ingest_pdf_bytes(b"pdf-content")
+    assert res.text == "Business Name: ABC"
+    assert not res.warnings
+    mock_open.assert_called_once_with(stream=b"pdf-content", filetype="pdf")
 
 
 @patch("pymupdf.open")
@@ -290,12 +293,9 @@ def test_pdf_ingest_scanned(mock_open) -> None:
     mock_doc.__getitem__.return_value = mock_page1
     mock_open.return_value = mock_doc
 
-    with patch("pathlib.Path.is_file", return_value=True), \
-         patch("pathlib.Path.stat") as mock_stat:
-        mock_stat.return_value.st_size = 1000
-        res = ingest_pdf("test.pdf")
-        assert res.text == ""
-        assert "SCAN_NOT_SUPPORTED" in res.warnings
+    res = ingest_pdf_bytes(b"pdf-content")
+    assert res.text == ""
+    assert "SCAN_NOT_SUPPORTED" in res.warnings
 
 
 # ===========================================================================
@@ -388,7 +388,7 @@ def test_mapping_empty_intents_needs_review() -> None:
     assert "MISSING_OFFER_OR_NEED" in warnings
 
 
-def test_mapping_unknown_item_enum_is_nulled_and_reviewed() -> None:
+def test_mapping_unknown_item_enum_is_dropped_and_reviewed() -> None:
     from app.analyzer.schemas import OfferDraft
 
     draft = BusinessDraft(
@@ -401,9 +401,9 @@ def test_mapping_unknown_item_enum_is_nulled_and_reviewed() -> None:
         industry_catalog=_industry_catalog(),
     )
 
-    assert len(validated.offers) == 1
-    assert validated.offers[0].intent_type is None
+    assert validated.offers == []
     assert meta["business.offers"].needs_review is True
+    assert "MISSING_OFFER_OR_NEED" in _warnings
 
 
 def test_persons_is_fixed_empty_in_v01() -> None:
@@ -470,8 +470,12 @@ async def test_gemini_provider_uses_async_client_without_network() -> None:
 
     result = await provider.extract("Business profile")
 
-    assert result == {"name": "Acme"}
+    assert result["name"] == "Acme"
+    assert result["persons"] == []
     generate_content.assert_awaited_once()
+    config = generate_content.await_args.kwargs["config"]
+    assert config.response_mime_type == "application/json"
+    assert config.response_schema is not None
 
 
 @pytest.mark.anyio
@@ -494,7 +498,13 @@ async def test_run_analysis_completed() -> None:
     ])
     req = AnalyzeRequest(source_type="text", inline_text="Extract this info")
     provider = MockProvider()
-    response = await run_analysis(req, provider, industry_catalog=catalog)
+    response = await run_analysis(
+        req,
+        provider,
+        industry_catalog=catalog,
+        payload_resolver=DisabledPayloadResolver(),
+        account_id=_ACCOUNT_ID,
+    )
     assert response.status == "completed"
     assert response.data.name == "MockBusiness-48bdc533"  # deterministic mock output
     assert not response.warnings
@@ -509,6 +519,8 @@ async def test_run_analysis_timeout() -> None:
         req,
         provider,
         industry_catalog=_industry_catalog(),
+        payload_resolver=DisabledPayloadResolver(),
+        account_id=_ACCOUNT_ID,
         timeout=0.1,
     )
     assert response.status == "fallback"
@@ -531,6 +543,8 @@ async def test_url_dns_lookup_obeys_analysis_deadline() -> None:
             request,
             MockProvider(),
             industry_catalog=_industry_catalog(),
+            payload_resolver=DisabledPayloadResolver(),
+            account_id=_ACCOUNT_ID,
             timeout=0.01,
         )
 
@@ -546,6 +560,8 @@ async def test_run_analysis_invalid_json() -> None:
         req,
         provider,
         industry_catalog=_industry_catalog(),
+        payload_resolver=DisabledPayloadResolver(),
+        account_id=_ACCOUNT_ID,
     )
     assert response.status == "fallback"
     assert "LLM_INVALID_JSON" in response.warnings
@@ -618,6 +634,7 @@ def test_analyze_success(mock_fetch, test_client: TestClient) -> None:
         is_active=True
     )
     app.dependency_overrides[get_current_account] = lambda: mock_account
+    app.dependency_overrides[get_analyzer_provider] = MockProvider
 
     try:
         response = test_client.post(
@@ -634,6 +651,7 @@ def test_analyze_success(mock_fetch, test_client: TestClient) -> None:
     finally:
         clear_reference_cache()
         app.dependency_overrides.pop(get_current_account, None)
+        app.dependency_overrides.pop(get_analyzer_provider, None)
 
 
 @patch("app.analyzer.router._fetch_reference_data", new_callable=AsyncMock)
@@ -649,6 +667,7 @@ def test_reference_timeout_returns_fallback(mock_fetch, test_client: TestClient)
         is_active=True,
     )
     app.dependency_overrides[get_current_account] = lambda: mock_account
+    app.dependency_overrides[get_analyzer_provider] = MockProvider
     clear_reference_cache()
 
     try:
@@ -664,3 +683,4 @@ def test_reference_timeout_returns_fallback(mock_fetch, test_client: TestClient)
     finally:
         clear_reference_cache()
         app.dependency_overrides.pop(get_current_account, None)
+        app.dependency_overrides.pop(get_analyzer_provider, None)
