@@ -71,6 +71,53 @@ export type AccountResponse = {
 };
 
 /**
+ * AnalyzeRequest
+ *
+ * Input payload for POST /api/v1/analyze.
+ */
+export type AnalyzeRequest = {
+  /**
+   * Inline Text
+   */
+  inline_text?: string | null;
+  /**
+   * Payload Ref
+   */
+  payload_ref?: string | null;
+  /**
+   * Source Type
+   */
+  source_type: 'text' | 'url' | 'pdf';
+};
+
+/**
+ * AnalyzeResponse
+ *
+ * Output envelope for the analyzer endpoint.
+ */
+export type AnalyzeResponse = {
+  data: BusinessDraft;
+  /**
+   * Field Meta
+   */
+  field_meta?: {
+    [key: string]: FieldMeta;
+  };
+  /**
+   * Schema Version
+   */
+  schema_version?: '1.0';
+  /**
+   * Status
+   */
+  status: 'completed' | 'fallback';
+  /**
+   * Warnings
+   */
+  warnings?: Array<string>;
+};
+
+/**
  * AuthMeResponse
  */
 export type AuthMeResponse = {
@@ -290,6 +337,83 @@ export type BusinessDetailResponse = {
    * Warnings
    */
   warnings?: Array<string>;
+  /**
+   * Year Established
+   */
+  year_established?: number | null;
+};
+
+/**
+ * BusinessDraft
+ *
+ * Mirrors BusinessCreate but ALL fields are nullable/optional.
+ *
+ * persons is always [] in v0.1 — we do not extract contact info.
+ * offers/needs are [] when the source document doesn't mention business intent.
+ */
+export type BusinessDraft = {
+  /**
+   * Business Stage
+   */
+  business_stage?: string | null;
+  /**
+   * City
+   */
+  city?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Employee Range
+   */
+  employee_range?: string | null;
+  /**
+   * Geo Operating
+   */
+  geo_operating?: Array<string>;
+  /**
+   * Industry L1
+   */
+  industry_l1?: string | null;
+  /**
+   * Industry L2
+   */
+  industry_l2?: string | null;
+  /**
+   * Legal Type
+   */
+  legal_type?: string | null;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Needs
+   */
+  needs?: Array<NeedDraft>;
+  /**
+   * Offers
+   */
+  offers?: Array<OfferDraft>;
+  /**
+   * Persons
+   */
+  persons?: Array<{
+    [key: string]: unknown;
+  }>;
+  /**
+   * Province
+   */
+  province?: string | null;
+  /**
+   * Revenue Range Vnd
+   */
+  revenue_range_vnd?: string | null;
+  /**
+   * Tax Id
+   */
+  tax_id?: string | null;
   /**
    * Year Established
    */
@@ -531,6 +655,22 @@ export type EnumOption = {
 };
 
 /**
+ * FieldMeta
+ *
+ * Per-field metadata attached to every extracted field.
+ */
+export type FieldMeta = {
+  /**
+   * Confidence
+   */
+  confidence?: number | null;
+  /**
+   * Needs Review
+   */
+  needs_review?: boolean;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -670,6 +810,44 @@ export type NeedCreate = {
    * Title
    */
   title: string;
+};
+
+/**
+ * NeedDraft
+ *
+ * Draft need — all fields optional.
+ */
+export type NeedDraft = {
+  /**
+   * Category L1
+   */
+  category_l1?: string | null;
+  /**
+   * Category L2
+   */
+  category_l2?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Geo Scope
+   */
+  geo_scope?: Array<string>;
+  /**
+   * Intent Type
+   */
+  intent_type?: string | null;
+  /**
+   * Structured Attrs
+   */
+  structured_attrs?: {
+    [key: string]: unknown;
+  };
+  /**
+   * Title
+   */
+  title?: string | null;
 };
 
 /**
@@ -823,6 +1001,44 @@ export type OfferCreate = {
    * Title
    */
   title: string;
+};
+
+/**
+ * OfferDraft
+ *
+ * Draft offer — all fields optional.
+ */
+export type OfferDraft = {
+  /**
+   * Category L1
+   */
+  category_l1?: string | null;
+  /**
+   * Category L2
+   */
+  category_l2?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Geo Scope
+   */
+  geo_scope?: Array<string>;
+  /**
+   * Intent Type
+   */
+  intent_type?: string | null;
+  /**
+   * Structured Attrs
+   */
+  structured_attrs?: {
+    [key: string]: unknown;
+  };
+  /**
+   * Title
+   */
+  title?: string | null;
 };
 
 /**
@@ -1129,6 +1345,33 @@ export type ValidationError = {
    */
   type: string;
 };
+
+export type AnalyzeBusinessApiV1AnalyzePostData = {
+  body: AnalyzeRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/analyze';
+};
+
+export type AnalyzeBusinessApiV1AnalyzePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type AnalyzeBusinessApiV1AnalyzePostError =
+  AnalyzeBusinessApiV1AnalyzePostErrors[keyof AnalyzeBusinessApiV1AnalyzePostErrors];
+
+export type AnalyzeBusinessApiV1AnalyzePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: AnalyzeResponse;
+};
+
+export type AnalyzeBusinessApiV1AnalyzePostResponse =
+  AnalyzeBusinessApiV1AnalyzePostResponses[keyof AnalyzeBusinessApiV1AnalyzePostResponses];
 
 export type LoginApiV1AuthLoginPostData = {
   body: LoginRequest;

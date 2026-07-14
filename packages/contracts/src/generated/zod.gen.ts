@@ -33,6 +33,17 @@ export const zAccountResponse = z.object({
 });
 
 /**
+ * AnalyzeRequest
+ *
+ * Input payload for POST /api/v1/analyze.
+ */
+export const zAnalyzeRequest = z.object({
+  inline_text: z.string().nullish(),
+  payload_ref: z.string().nullish(),
+  source_type: z.enum(['text', 'url', 'pdf']),
+});
+
+/**
  * BusinessUpdate
  */
 export const zBusinessUpdate = z.object({
@@ -91,6 +102,16 @@ export const zCertificationResponse = z.object({
 export const zEnumOption = z.object({
   code: z.string(),
   label: z.string(),
+});
+
+/**
+ * FieldMeta
+ *
+ * Per-field metadata attached to every extracted field.
+ */
+export const zFieldMeta = z.object({
+  confidence: z.number().gte(0).lte(1).nullish(),
+  needs_review: z.boolean().optional().default(true),
 });
 
 /**
@@ -153,6 +174,21 @@ export const zNeedCreate = z.object({
   ]),
   structured_attrs: z.record(z.string(), z.unknown()).optional(),
   title: z.string().min(1),
+});
+
+/**
+ * NeedDraft
+ *
+ * Draft need — all fields optional.
+ */
+export const zNeedDraft = z.object({
+  category_l1: z.string().nullish(),
+  category_l2: z.string().nullish(),
+  description: z.string().nullish(),
+  geo_scope: z.array(z.string()).optional(),
+  intent_type: z.string().nullish(),
+  structured_attrs: z.record(z.string(), z.unknown()).optional(),
+  title: z.string().nullish(),
 });
 
 /**
@@ -226,6 +262,61 @@ export const zOfferCreate = z.object({
   ]),
   structured_attrs: z.record(z.string(), z.unknown()).optional(),
   title: z.string().min(1),
+});
+
+/**
+ * OfferDraft
+ *
+ * Draft offer — all fields optional.
+ */
+export const zOfferDraft = z.object({
+  category_l1: z.string().nullish(),
+  category_l2: z.string().nullish(),
+  description: z.string().nullish(),
+  geo_scope: z.array(z.string()).optional(),
+  intent_type: z.string().nullish(),
+  structured_attrs: z.record(z.string(), z.unknown()).optional(),
+  title: z.string().nullish(),
+});
+
+/**
+ * BusinessDraft
+ *
+ * Mirrors BusinessCreate but ALL fields are nullable/optional.
+ *
+ * persons is always [] in v0.1 — we do not extract contact info.
+ * offers/needs are [] when the source document doesn't mention business intent.
+ */
+export const zBusinessDraft = z.object({
+  business_stage: z.string().nullish(),
+  city: z.string().nullish(),
+  description: z.string().nullish(),
+  employee_range: z.string().nullish(),
+  geo_operating: z.array(z.string()).optional(),
+  industry_l1: z.string().nullish(),
+  industry_l2: z.string().nullish(),
+  legal_type: z.string().nullish(),
+  name: z.string().nullish(),
+  needs: z.array(zNeedDraft).optional(),
+  offers: z.array(zOfferDraft).optional(),
+  persons: z.array(z.record(z.string(), z.unknown())).max(0).optional(),
+  province: z.string().nullish(),
+  revenue_range_vnd: z.string().nullish(),
+  tax_id: z.string().nullish(),
+  year_established: z.int().nullish(),
+});
+
+/**
+ * AnalyzeResponse
+ *
+ * Output envelope for the analyzer endpoint.
+ */
+export const zAnalyzeResponse = z.object({
+  data: zBusinessDraft,
+  field_meta: z.record(z.string(), zFieldMeta).optional(),
+  schema_version: z.literal('1.0').optional().default('1.0'),
+  status: z.enum(['completed', 'fallback']),
+  warnings: z.array(z.string()).optional(),
 });
 
 /**
@@ -539,6 +630,13 @@ export const zValidationError = z.object({
 export const zHttpValidationError = z.object({
   detail: z.array(zValidationError).optional(),
 });
+
+export const zAnalyzeBusinessApiV1AnalyzePostBody = zAnalyzeRequest;
+
+/**
+ * Successful Response
+ */
+export const zAnalyzeBusinessApiV1AnalyzePostResponse = zAnalyzeResponse;
 
 export const zLoginApiV1AuthLoginPostBody = zLoginRequest;
 

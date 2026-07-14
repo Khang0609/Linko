@@ -116,6 +116,89 @@
         "title": "AccountResponse",
         "type": "object"
       },
+      "AnalyzeRequest": {
+        "description": "Input payload for POST /api/v1/analyze.",
+        "properties": {
+          "inline_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inline Text"
+          },
+          "payload_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload Ref"
+          },
+          "source_type": {
+            "enum": [
+              "text",
+              "url",
+              "pdf"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_type"
+        ],
+        "title": "AnalyzeRequest",
+        "type": "object"
+      },
+      "AnalyzeResponse": {
+        "description": "Output envelope for the analyzer endpoint.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BusinessDraft"
+          },
+          "field_meta": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FieldMeta"
+            },
+            "title": "Field Meta",
+            "type": "object"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "fallback"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "title": "AnalyzeResponse",
+        "type": "object"
+      },
       "AuthMeResponse": {
         "properties": {
           "account": {
@@ -566,6 +649,175 @@
           "created_at"
         ],
         "title": "BusinessDetailResponse",
+        "type": "object"
+      },
+      "BusinessDraft": {
+        "description": "Mirrors BusinessCreate but ALL fields are nullable/optional.\n\npersons is always [] in v0.1 — we do not extract contact info.\noffers/needs are [] when the source document doesn't mention business intent.",
+        "properties": {
+          "business_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Stage"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "employee_range": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee Range"
+          },
+          "geo_operating": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Geo Operating",
+            "type": "array"
+          },
+          "industry_l1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry L1"
+          },
+          "industry_l2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry L2"
+          },
+          "legal_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Type"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "needs": {
+            "items": {
+              "$ref": "#/components/schemas/NeedDraft"
+            },
+            "title": "Needs",
+            "type": "array"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/OfferDraft"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "persons": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 0,
+            "title": "Persons",
+            "type": "array"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "revenue_range_vnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue Range Vnd"
+          },
+          "tax_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Id"
+          },
+          "year_established": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Established"
+          }
+        },
+        "title": "BusinessDraft",
         "type": "object"
       },
       "BusinessResponse": {
@@ -1040,6 +1292,31 @@
         "title": "EnumOption",
         "type": "object"
       },
+      "FieldMeta": {
+        "description": "Per-field metadata attached to every extracted field.",
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "needs_review": {
+            "default": true,
+            "title": "Needs Review",
+            "type": "boolean"
+          }
+        },
+        "title": "FieldMeta",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1259,6 +1536,80 @@
           "title"
         ],
         "title": "NeedCreate",
+        "type": "object"
+      },
+      "NeedDraft": {
+        "description": "Draft need — all fields optional.",
+        "properties": {
+          "category_l1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category L1"
+          },
+          "category_l2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category L2"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "geo_scope": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Geo Scope",
+            "type": "array"
+          },
+          "intent_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Type"
+          },
+          "structured_attrs": {
+            "additionalProperties": true,
+            "title": "Structured Attrs",
+            "type": "object"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "NeedDraft",
         "type": "object"
       },
       "NeedResponse": {
@@ -1534,6 +1885,80 @@
           "title"
         ],
         "title": "OfferCreate",
+        "type": "object"
+      },
+      "OfferDraft": {
+        "description": "Draft offer — all fields optional.",
+        "properties": {
+          "category_l1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category L1"
+          },
+          "category_l2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category L2"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "geo_scope": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Geo Scope",
+            "type": "array"
+          },
+          "intent_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Type"
+          },
+          "structured_attrs": {
+            "additionalProperties": true,
+            "title": "Structured Attrs",
+            "type": "object"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "OfferDraft",
         "type": "object"
       },
       "OfferResponse": {
@@ -2142,6 +2567,53 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/analyze": {
+      "post": {
+        "description": "Analyze unstructured business information within one end-to-end deadline.",
+        "operationId": "analyze_business_api_v1_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Analyze Business",
+        "tags": [
+          "analyzer"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "login_api_v1_auth_login_post",
